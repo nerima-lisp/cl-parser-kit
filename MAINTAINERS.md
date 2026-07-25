@@ -9,6 +9,9 @@ Maintainers are expected to:
 - review changes for API and behavior regressions
 - keep `README.md`, `API.md`, `EXAMPLES.md`, and `SUPPORT.md` aligned with the
   shipped behavior
+- keep the published documentation site (`docs/src/`, built by
+  `nix build .#docs` and deployed via `.github/workflows/docs.yml`) aligned
+  with the root docs it restructures
 - preserve the reproducible verification path through `nix flake check` and
   the focused `sbcl --script scripts/run-tests.lisp` entry point inside the
   Nix development shell

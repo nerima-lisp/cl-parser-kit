@@ -78,6 +78,8 @@ Before treating a checkout as a release candidate:
 - rerun `sbcl --script scripts/run-examples.lisp` if the checkout will be
   consumed through the documented sample workflows
 - ensure public docs and examples still match observed behavior
+- ensure `docs/src/` (the published MkDocs site) still matches the root docs
+  it restructures, and rebuilds cleanly with `nix build .#docs`
 - ensure `SECURITY.md` still points reporters at the right support and contact
   path for that checkout
 - ensure maintainer and governance docs still describe the active ownership

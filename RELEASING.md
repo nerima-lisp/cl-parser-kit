@@ -28,7 +28,10 @@ Before cutting a public release:
    contribution, incident, and ownership model
 9. confirm `VERSIONING.md` and `ROADMAP.md` still describe the release policy
    and remaining public gaps honestly
-10. summarize user-visible changes in `CHANGELOG.md`
+10. confirm `docs/src/` still mirrors the documents above, and rerun
+    `nix build .#docs` (or `mkdocs build --strict --config-file docs/mkdocs.yml`)
+    to prove the published site still builds cleanly
+11. summarize user-visible changes in `CHANGELOG.md`
 
 ## After a Release
 

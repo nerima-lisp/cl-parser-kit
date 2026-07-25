@@ -1,6 +1,15 @@
 # cl-parser-kit
 
+[![CI](https://github.com/nerima-lisp/cl-parser-kit/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nerima-lisp/cl-parser-kit/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Documentation](https://img.shields.io/badge/docs-MkDocs%20Material-283593)](https://nerima-lisp.github.io/cl-parser-kit/)
+
 `cl-parser-kit` is a small, practical parser toolkit for Common Lisp.
+
+Full documentation, including the API reference, parsing patterns guide,
+example map, and every governance and policy document, is published at
+<https://nerima-lisp.github.io/cl-parser-kit/>. The source for that site
+lives in [docs/src/](docs/src/index.md).
 
 It focuses on the pieces that recur in real text-language parsers:
 

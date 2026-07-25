@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- added a full MkDocs (Material) documentation site under `docs/`, published
+  to GitHub Pages at <https://nerima-lisp.github.io/cl-parser-kit/> via
+  `.github/workflows/docs.yml` and buildable offline with `nix build .#docs`;
+  `docs/src/` restructures `README.md`, `API.md`, `ARCHITECTURE.md`,
+  `EXAMPLES.md`, `PARSING_PATTERNS.md`, `ROADMAP.md`, and every governance
+  and policy document into a navigable site, with `examples/*.lisp` and
+  `src/package.lisp` references rewritten to GitHub blob links so the
+  rendered site does not depend on the surrounding source tree
+
 ## 0.3.0 - 2026-07-24
 
 - rewrote `%pratt-start-expression/cps` (`pratt-parse.lisp`) to reuse the
