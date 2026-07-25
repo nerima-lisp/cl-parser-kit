@@ -13,3 +13,7 @@
 
 # MkDocs local build output (docs/mkdocs.yml sets site_dir: ../site)
 /site/
+
+# nix build output symlinks (`nix build .#docs` leaves ./result behind)
+/result
+/result-*
