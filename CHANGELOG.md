@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- bumped the `cl-weave` test dependency 0.11.0 -> 1.0.0 (cl-weave's first
+  stable, SemVer-committed release; audit-driven correctness fixes only in
+  reporters/matchers/CLI/runner internals, no change to any macro or API this
+  project uses)
+
 ## 0.4.0 - 2026-07-25
 
 - added `left-recursion-detected` — `memoize` now signals it instead of

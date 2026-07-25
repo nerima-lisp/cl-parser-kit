@@ -4,7 +4,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     cl-weave = {
-      url = "github:nerima-lisp/cl-weave/v0.11.0";
+      url = "github:nerima-lisp/cl-weave/v1.0.0";
       flake = false;
     };
     cl-prolog = {
