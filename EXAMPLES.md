@@ -375,12 +375,12 @@ item, and `delimited-sep-end-by` when a final separator is part of the grammar.
    table :number 0
    (lambda (token stream next current-table)
      (declare (ignore stream current-table))
-     (values (cl-parser-kit:token-value token) next)))
+     (values t (cl-parser-kit:token-value token) next nil)))
   (cl-parser-kit:register-infix-operator
    table :plus 10 11
-   (lambda (left op right current-table)
+   (lambda (left op right next current-table)
      (declare (ignore op current-table))
-     (list :add left right)))
+     (values t (list :add left right) next nil)))
   (multiple-value-bind (ok value next failure)
       (cl-parser-kit:parse-pratt-source "1 + +" tokenizer table)
     (declare (ignore next))

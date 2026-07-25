@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- fixed a genuinely broken code example in `EXAMPLES.md`'s "Render A Parse Failure" section
+  (and its `docs/src/examples.md` mirror): the infix `led` callback was missing its `next`
+  parameter (4 params instead of the required 5, `(left op right next current-table)`) and
+  both callbacks returned bare/incomplete values instead of the required
+  `(values ok value next failure)` -- copy-pasting the snippet as written threw a raw
+  `TYPE-ERROR` ("NIL is not of type REAL"), confirmed by actually running it before and after
+  the fix. Neither `EXAMPLES.md` nor its mirror have automated snippet-execution coverage (only
+  link-resolution and file-name-mention checks), so this had no test to catch it; found by a
+  full end-to-end read of the file, not a targeted search
 - ran `paredit inspect lint` (a full sweep of ~90 within-file logic-bug checks) across all of
   `src/`+`t/` for the first time; fixed the 13 genuine findings after verifying each by hand
   (a real redundant `and` operand in `%token-metadata-source`, two `setf`-of-`1+` spots that
