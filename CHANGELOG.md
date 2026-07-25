@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- bumped the `cl-prolog` test dependency 0.8.0 -> 1.0.0 (cl-prolog's first stable release,
+  fixing numerous ISO 13211-1 conformance defects -- most described as behavior changes: atom
+  text/case identity, operator-as-term parsing, arithmetic operator semantics, stream/IO error
+  contracts, and more). Verified this project's only cl-prolog call site
+  (`t/prolog-contract-test.lisp`) is safe: it builds clauses entirely from Lisp keyword symbols
+  via `cl-prolog:make-clause`/`cl-prolog:prolog`, never parsing Prolog source text -- the layer
+  nearly every breaking change in this release lives in. Confirmed empirically, not just by
+  reasoning: ran the full test suite (624/624, including all 5 `PRATT-RELATIONAL-CONTRACTS`
+  cases explicitly) and the coverage cycle against a clean scratch clone of the release commit
 - converted 4 duplicated `map-parser` + `seq` + manual `first`/`second`/`third`/`fourth`
   destructuring sites to `seq-map` with named lambda parameters, matching the idiom
   `json-parser-example.lisp` already used: `examples/sequence-helper-example.lisp`'s
