@@ -50,6 +50,11 @@
        (expect ,value :to-be-falsy)
        ,@assertions)))
 
+(defun %circular-list (&rest items)
+  (let ((list (copy-list items)))
+    (setf (cdr (last list)) list)
+    list))
+
 (defun %assert-diagnostic-span (diagnostic start-line start-column end-line end-column)
   (let ((span (diagnostic-span diagnostic)))
     (expect diagnostic :to-be-truthy)
