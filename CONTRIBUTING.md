@@ -23,6 +23,11 @@ shape.
   enforcement guidance change
 - keep `VERSIONING.md` / `RELEASING.md` in sync when release expectations or
   public API text changes
+- keep `docs/src/` in sync whenever `README.md`, `API.md`, `ARCHITECTURE.md`,
+  `EXAMPLES.md`, `PARSING_PATTERNS.md`, `ROADMAP.md`, or a governance/policy
+  document changes -- `docs/src/` restructures that same content for the
+  published MkDocs site and the two copies must not drift; verify with
+  `nix build .#docs` or `mkdocs build --strict --config-file docs/mkdocs.yml`
 - avoid introducing broad utility layers or hidden dependencies
 - keep changes readable from the test suite
 - preserve the executable example contract: representative README snippets and
@@ -130,6 +135,8 @@ Before proposing a user-visible change, verify:
 
 - tests for the changed behavior exist or were updated
 - public docs (`README.md`, `API.md`, `EXAMPLES.md`) match the shipped API
+- `docs/src/` (the published MkDocs site) reflects the same changes as the
+  root docs it restructures
 - `SUPPORT.md` matches the verification reality of the current checkout
 - collaboration docs (`CODE_OF_CONDUCT.md`, `GOVERNANCE.md`,
   `MAINTAINERS.md`) still describe the actual maintenance model

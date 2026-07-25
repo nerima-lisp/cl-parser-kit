@@ -24,6 +24,12 @@
   likely never synced when those landed. Verified with a systematic
   symbol-set diff against the root file, not spot-checking, that every
   other documented symbol matches between the two
+- `CONTRIBUTING.md` was missing the "keep `docs/src/` in sync with root
+  docs" reminder that its own published-site mirror (`docs/src/
+  contributing.md`) already carried -- the exact rule the two gaps above
+  had silently violated, visible only to someone reading the site's copy
+  rather than the root repo most contributors start from. Added the
+  matching Expectations and Release Checklist bullets to the root file
 
 ## 0.4.0 - 2026-07-25
 
