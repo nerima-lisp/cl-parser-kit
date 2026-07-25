@@ -185,12 +185,13 @@ which actually loads)."
 (defun load-test-dependency-sources (project-root)
   (%do-test-dependency-systems project-root #'load-system-source-files))
 
+;;; Both systems live in cl-parser-kit.asd (PACKAGE_STANDARD.md: the org does
+;;; not use a separate <pkg>-test.asd), so one LOAD covers the test system too
+;;; and INCLUDE-TEST-SYSTEM-P now only governs the external test dependencies.
 (defun load-project-asd-definitions (project-root &key (include-test-system-p t))
   (when include-test-system-p
     (load-test-dependency-asd-definitions project-root))
-  (load-asd-definition (project-file project-root "cl-parser-kit.asd"))
-  (when include-test-system-p
-    (load-asd-definition (project-file project-root "cl-parser-kit-test.asd"))))
+  (load-asd-definition (project-file project-root "cl-parser-kit.asd")))
 
 (defun load-project-sources (project-root)
   (load-system-source-files (project-file project-root "cl-parser-kit.asd")
@@ -204,15 +205,15 @@ which actually loads)."
   (load-project-asd-definitions project-root)
   (load-test-dependency-sources project-root)
   (load-project-sources project-root)
-  (load-system-source-files (project-file project-root "cl-parser-kit-test.asd")
-                            "cl-parser-kit-test"))
+  (load-system-source-files (project-file project-root "cl-parser-kit.asd")
+                            "cl-parser-kit/test"))
 
 (defun compile-project-tests (project-root)
   (load-project-asd-definitions project-root)
   (load-test-dependency-sources project-root)
   (compile-project-sources project-root)
-  (compile-system-source-files (project-file project-root "cl-parser-kit-test.asd")
-                               "cl-parser-kit-test"))
+  (compile-system-source-files (project-file project-root "cl-parser-kit.asd")
+                               "cl-parser-kit/test"))
 
 (defun package-symbol-call (package-name symbol-name &rest arguments)
   (apply (symbol-function (find-symbol (string symbol-name) package-name))

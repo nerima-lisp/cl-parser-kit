@@ -153,7 +153,7 @@
             command = [
               "sbcl"
               "--script"
-              "scripts/run-tests.lisp"
+              "run-tests.lisp"
             ];
           };
 

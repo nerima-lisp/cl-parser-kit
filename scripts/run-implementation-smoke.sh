@@ -7,11 +7,11 @@ project_root=$(CDPATH='' cd -- "$script_dir/.." && pwd)
 failures=0
 known=0
 compile_check_script="$project_root/scripts/run-compile-check.lisp"
-run_tests_script="$project_root/scripts/run-tests.lisp"
+run_tests_script="$project_root/run-tests.lisp"
 run_examples_script="$project_root/scripts/run-examples.lisp"
 
 # Historical note: an earlier variant generated a driver that did
-# `(load #p".../scripts/run-tests.lisp")`. The smoke path now invokes
+# `(load #p".../run-tests.lisp")`. The smoke path now invokes
 # the checked-in verification entrypoints directly for each implementation.
 
 have_command() {

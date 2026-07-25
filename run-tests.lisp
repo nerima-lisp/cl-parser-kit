@@ -1,5 +1,10 @@
+;;;; Test entry point. PACKAGE_STANDARD.md puts this at the repository root so
+;;;; that `sbcl --script run-tests.lisp` works from a raw checkout without
+;;;; knowing where the helper scripts live; the shared loader stays in
+;;;; scripts/bootstrap.lisp, which is also used by run-coverage.lisp and
+;;;; run-compile-check.lisp.
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (load (merge-pathnames "bootstrap.lisp"
+  (load (merge-pathnames "scripts/bootstrap.lisp"
                          (make-pathname :name nil
                                         :type nil
                                         :version nil

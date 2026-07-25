@@ -84,12 +84,18 @@
                         #'string<)))
     (expect missing :to-equal '())))
 
+;;; Both systems live in the single cl-parser-kit.asd, so this asserts the full
+;;; eight-field metadata set PACKAGE_STANDARD.md requires rather than only the
+;;; three fields the two-file layout used to check.
 (it-sequential "asdf-systems-publish-oss-metadata-test"
-  (dolist (name '("cl-parser-kit.asd" "cl-parser-kit-test.asd"))
-    (let ((contents (repository-file-contents name)))
-      (expect (string-contains-p ":homepage" contents) :to-be-truthy)
-      (expect (string-contains-p ":bug-tracker" contents) :to-be-truthy)
-      (expect (string-contains-p ":source-control" contents) :to-be-truthy))))
+  (let ((contents (repository-file-contents "cl-parser-kit.asd")))
+    (dolist (field '(":description" ":author" ":maintainer" ":license"
+                     ":version" ":homepage" ":bug-tracker" ":source-control"))
+      (expect (string-contains-p field contents) :to-be-truthy))
+    (expect (string-contains-p ":author \"takeokunn <bararararatty@gmail.com>\"" contents)
+            :to-be-truthy)
+    (expect (string-contains-p "defsystem \"cl-parser-kit/test\"" contents)
+            :to-be-truthy)))
 
 (it-sequential "examples-guide-documents-raw-checkout-example-verification-test"
   (assert-document-contains-all
