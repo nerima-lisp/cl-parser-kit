@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- raised `ci.yml`'s `nix flake check` timeout (660s -> 2200s inner, 12 -> 40 step
+  `timeout-minutes`, 20 -> 45 job `timeout-minutes`) after confirming via the actual failed
+  CI run for the `paredit-cli` v0.8.0 bump that it timed out mid-build: paredit-cli's 114
+  dependency crates had just finished compiling but its own (much larger, post-v0.8.0) binary
+  crate hadn't started -- Cachix never got a completed build to cache, so every subsequent run
+  would have hit the identical timeout in a permanent loop. A real, self-inflicted regression
+  from bumping the stale pin fixed earlier this same round; caught by checking the live CI run
+  result rather than assuming the fix was clean
 - fixed two broken GitHub Actions pins in `.github/workflows/ci.yml` (the primary CI gate):
   `cachix/install-nix-action` and `cachix/cachix-action` were pinned to commit SHAs that no
   longer exist in either action's repository (confirmed via each repo's git commit-object API
