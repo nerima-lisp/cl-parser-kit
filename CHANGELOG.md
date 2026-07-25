@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- converted 4 duplicated `map-parser` + `seq` + manual `first`/`second`/`third`/`fourth`
+  destructuring sites to `seq-map` with named lambda parameters, matching the idiom
+  `json-parser-example.lisp` already used: `examples/sequence-helper-example.lisp`'s
+  `parse-binding-fields-example`, its exact duplicate in `t/examples-file-support.lisp`'s
+  `with-punctuated-example-parsers` macro, and `EXAMPLES.md`'s "Project Token Text And Values"
+  snippet (+ its `docs/src/examples.md` mirror); separately, `examples/token-navigation-example
+  .lisp`'s `inspect-token-navigation-example` and its duplicate in
+  `t/examples-snippets-core-advanced-test.lisp`. Each of the 4 examples/`json-parser-example`
+  duplication sites was verified output-identical before/after by actually running it (not just
+  diffing the rewrite), and the `EXAMPLES.md` snippet was verified by extracting and evaling its
+  exact literal text (not a hand-typed reconstruction, per the lesson from the second
+  `EXAMPLES.md` bug found earlier this session)
 - fixed a global-name-collision hazard across `examples/`: `*tokenizer*` was independently
   defined in `cst-example.lisp`, `diagnostic-example.lisp`, and `mini-language-parser.lisp`,
   and `*table*` in `csv-parser-example.lisp` and `diagnostic-example.lisp` -- latent only

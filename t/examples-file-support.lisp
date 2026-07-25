@@ -43,21 +43,16 @@
               (literal ")" :type :rparen))
              (literal ";" :type :semicolon)))
           (,binding-parser
-            (map-parser
-             (seq
-              (type-token-text :identifier)
-              (literal-value "=" :type :equals)
-              (terminated-by
-               (type-token-value :number)
-               (literal-text ";" :type :semicolon))
-              (end-of-input))
-             (lambda (parts)
-               (let ((identifier (first parts))
-                     (operator (second parts))
-                     (value (third parts))
-                     (end-of-input (fourth parts)))
-                 (declare (ignore end-of-input))
-                 (list identifier operator value))))))
+            (seq-map
+             (lambda (identifier operator value end-of-input)
+               (declare (ignore end-of-input))
+               (list identifier operator value))
+             (type-token-text :identifier)
+             (literal-value "=" :type :equals)
+             (terminated-by
+              (type-token-value :number)
+              (literal-text ";" :type :semicolon))
+             (end-of-input))))
      ,@body))
 
 (defmacro assert-example-failure (form (value next failure) &body assertions)

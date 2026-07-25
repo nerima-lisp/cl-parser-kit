@@ -43,21 +43,16 @@
 
 (defun parse-binding-fields-example ()
   (cl-parser-kit:parse-tokens
-   (cl-parser-kit:map-parser
-    (cl-parser-kit:seq
-     (cl-parser-kit:type-token-text :identifier)
-     (cl-parser-kit:literal-value "=" :type :equals)
-     (cl-parser-kit:terminated-by
-      (cl-parser-kit:type-token-value :number)
-      (cl-parser-kit:literal-text ";" :type :semicolon))
-     (cl-parser-kit:end-of-input))
-    (lambda (parts)
-      (let ((identifier (first parts))
-            (operator (second parts))
-            (value (third parts))
-            (end-of-input (fourth parts)))
-        (declare (ignore end-of-input))
-        (list identifier operator value))))
+   (cl-parser-kit:seq-map
+    (lambda (identifier operator value end-of-input)
+      (declare (ignore end-of-input))
+      (list identifier operator value))
+    (cl-parser-kit:type-token-text :identifier)
+    (cl-parser-kit:literal-value "=" :type :equals)
+    (cl-parser-kit:terminated-by
+     (cl-parser-kit:type-token-value :number)
+     (cl-parser-kit:literal-text ";" :type :semicolon))
+    (cl-parser-kit:end-of-input))
    (vector (cl-parser-kit:make-token :type :identifier :text "answer")
            (cl-parser-kit:make-token :type :equals :text "=" :value :assign)
            (cl-parser-kit:make-token :type :number :text "42" :value 42)
