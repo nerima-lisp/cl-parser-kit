@@ -244,6 +244,15 @@
           (value next failure)
         (expect (parse-failure-committed-p failure) :to-be-truthy)))))
 
+(it-sequential "combinator-sep-by-at-least-rejects-excessive-min-test"
+  ;; Unlike SEP-BY-BETWEEN (whose MAX check also bounds MIN via MIN <= MAX),
+  ;; SEP-BY-AT-LEAST has no MAX at all, so it must validate MIN itself against
+  ;; *MAXIMUM-PARSER-REPETITION-COUNT* directly, matching every other bounded
+  ;; repetition combinator's resource-limit contract.
+  (let ((*maximum-parser-repetition-count* 2))
+    (expect (lambda () (sep-by-at-least 3 (type-token :identifier) (type-token :comma)))
+            :to-throw 'error)))
+
 (it-sequential "combinator-sep-by-at-most-caps-repetitions-test"
   (let ((tokens *single-foo-token-vector*))
     (let ((parser (sep-by-at-most 2 (type-token-text :identifier) (type-token :comma))))

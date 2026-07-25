@@ -33,3 +33,13 @@
                                             :label "IDENT" :stream stream)
                               tokens))))
     (assert-string-contains-all log '("TRACE" "IDENT" "failed" "IDENTIFIER"))))
+
+(it-sequential "trace-parser-with-no-explicit-stream-follows-a-later-trace-output-rebind-test"
+  ;; TRACE-PARSER is built once, with no :STREAM, well before *TRACE-OUTPUT* is
+  ;; ever rebound -- proving STREAM is looked up fresh on each parse rather
+  ;; than captured once when the parser object itself is constructed.
+  (let* ((tokens (vector (make-token :type :identifier :text "a")))
+         (parser (trace-parser (type-token :identifier))))
+    (let ((log (with-output-to-string (*trace-output*)
+                 (parse-tokens parser tokens))))
+      (assert-string-contains-all log '("TRACE" "IDENTIFIER" "0" "1")))))

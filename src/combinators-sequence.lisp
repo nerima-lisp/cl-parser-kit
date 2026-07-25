@@ -229,7 +229,12 @@ always committed) that has already collected COUNT items ending at CURRENT.
 Stops greedily once MAX is reached (MAX of NIL means no upper bound); fewer than
 MIN items overall is a committed failure, since CURRENT is already past the
 first collected item. Shared by SEP-BY-BETWEEN and SEP-BY-AT-LEAST, which differ
-only in whether MAX is a literal integer or NIL."
+only in whether MAX is a literal integer or NIL.
+
+A plain LOOP rather than the self-recursive-through-closures CPS shape used
+elsewhere in this file, for the same reason as %COLLECT-MANY/CPS and
+%COLLECT-SEPARATED-ITEMS/CPS above: this is SEP-BY-BETWEEN/SEP-BY-AT-LEAST's
+hot per-item loop, so a closure per iteration is allocation worth avoiding."
   (loop
     (when (and max (>= count max))
       (return (%success (nreverse values) current diagnostics)))
@@ -293,6 +298,7 @@ allows zero items, unlike TIMES-BETWEEN's unseparated items."
 returning the list of results. (SEP-BY-AT-LEAST 0 P S) is (SEP-BY P S);
 (SEP-BY-AT-LEAST 1 P S) is (SEP-BY1 P S)."
   (check-type min (integer 0))
+  (%check-parser-repetition-count "SEP-BY-AT-LEAST" min)
   (case min
     (0 (sep-by parser separator))
     (1 (sep-by1 parser separator))
