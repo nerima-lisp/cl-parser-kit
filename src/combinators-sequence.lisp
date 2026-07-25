@@ -222,5 +222,94 @@ since the loop no longer delegates to that shared function."
   :allow-empty-p t
   :final-item-failure-recoverable-p t)
 
+(defun %run-bounded-separated-items (parser separator input current values diagnostics count min max)
+  "Continue a SEP-BY-style match (mandatory SEPARATOR before every further ITEM,
+a SEPARATOR failure always recoverable, an ITEM failure after a matched SEPARATOR
+always committed) that has already collected COUNT items ending at CURRENT.
+Stops greedily once MAX is reached (MAX of NIL means no upper bound); fewer than
+MIN items overall is a committed failure, since CURRENT is already past the
+first collected item. Shared by SEP-BY-BETWEEN and SEP-BY-AT-LEAST, which differ
+only in whether MAX is a literal integer or NIL."
+  (loop
+    (when (and max (>= count max))
+      (return (%success (nreverse values) current diagnostics)))
+    (multiple-value-bind (separator-ok separator-value separator-next separator-result)
+        (%run-parser-on-token-vector separator input current)
+      (declare (ignore separator-value))
+      (when (or (not separator-ok) (= separator-next current))
+        (let ((failure (if separator-ok
+                            (%progress-failure-object current separator)
+                            separator-result)))
+          (return (if (>= count min)
+                      (%recoverable-success (nreverse values) current diagnostics failure)
+                      (%committed-failure-from failure)))))
+      (multiple-value-bind (item-ok item-value item-next item-result)
+          (%run-parser-on-token-vector parser input separator-next)
+        (cond
+          ((and item-ok (/= item-next separator-next))
+           (setf values (cons item-value values)
+                 diagnostics (%merge-diagnostics diagnostics separator-result item-result)
+                 current item-next
+                 count (1+ count)))
+          (t
+           (return (%committed-failure-from
+                    (if item-ok
+                        (%progress-failure-object separator-next parser)
+                        item-result)))))))))
+
+(defun sep-by-between (min max parser separator)
+  "Parse PARSER separated by SEPARATOR, at least MIN and at most MAX times,
+returning the list of PARSER results (SEPARATOR's values are discarded).
+
+Matching is greedy: it keeps alternating PARSER/SEPARATOR until either fails to
+progress or MAX items have been collected. Fewer than MIN items is a failure,
+committed iff any input was consumed; once MIN is reached a further recoverable
+SEPARATOR failure simply stops, while an ITEM failure after a matched SEPARATOR
+is always committed (SEP-BY's contract: a separator promises another item). MIN
+and MAX are non-negative integers with MIN <= MAX. (SEP-BY-BETWEEN 0 MAX P S)
+allows zero items, unlike TIMES-BETWEEN's unseparated items."
+  (check-type min (integer 0))
+  (check-type max (integer 0))
+  (assert (<= min max) (min max)
+          "SEP-BY-BETWEEN requires MIN (~D) <= MAX (~D)" min max)
+  (%check-parser-repetition-count "SEP-BY-BETWEEN" max)
+  (make-parser
+   :name :sep-by-between
+   :fn (lambda (input position)
+         (if (zerop max)
+             (%success '() position '())
+             (%run-progressing-parser/cps
+              parser input position
+              (lambda (value next result)
+                (%run-bounded-separated-items
+                 parser separator input next (list value) result 1 min max))
+              (lambda (failure)
+                (if (zerop min)
+                    (%recoverable-success '() position '() failure)
+                    (%failure-from failure))))))))
+
+(defun sep-by-at-least (min parser separator)
+  "Parse PARSER separated by SEPARATOR at least MIN times with no upper bound,
+returning the list of results. (SEP-BY-AT-LEAST 0 P S) is (SEP-BY P S);
+(SEP-BY-AT-LEAST 1 P S) is (SEP-BY1 P S)."
+  (check-type min (integer 0))
+  (case min
+    (0 (sep-by parser separator))
+    (1 (sep-by1 parser separator))
+    (t (make-parser
+        :name :sep-by-at-least
+        :fn (lambda (input position)
+              (%run-progressing-parser/cps
+               parser input position
+               (lambda (value next result)
+                 (%run-bounded-separated-items
+                  parser separator input next (list value) result 1 min nil))
+               #'%failure-from))))))
+
+(defun sep-by-at-most (max parser separator)
+  "Parse PARSER separated by SEPARATOR at most MAX times (zero to MAX), returning
+the list of results. Equivalent to (SEP-BY-BETWEEN 0 MAX PARSER SEPARATOR)."
+  (sep-by-between 0 max parser separator))
+
 (define-parser-function opt (parser) :opt
   (%run-parser-or-recoverable parser input position nil))

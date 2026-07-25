@@ -191,6 +191,23 @@
          (tokens (%tokenize-with rules "SELECTED")))
     (expect (token-type (elt tokens 0)) :to-equal :identifier)))
 
+;;; MAKE-LITERAL-RULE :case-sensitive ------------------------------------------
+
+(it-sequential "tokenizer-literal-rule-is-case-sensitive-by-default-test"
+  ;; CASE-SENSITIVE defaults to T: "Select" must not match the :KW literal and
+  ;; falls through to the identifier rule instead.
+  (let* ((rules (list (make-literal-rule :kw "select") (make-identifier-rule)))
+         (tokens (%tokenize-with rules "Select")))
+    (expect (token-type (elt tokens 0)) :to-equal :identifier)))
+
+(it-sequential "tokenizer-literal-case-insensitive-matches-any-case-test"
+  (let ((rules (list (make-literal-rule :kw "select" :case-sensitive nil))))
+    (dolist (source '("select" "SELECT" "Select"))
+      (let ((tokens (%tokenize-with rules source)))
+        (expect (token-type (elt tokens 0)) :to-equal :kw)
+        (expect (token-text (elt tokens 0)) :to-equal "select")
+        (expect (token-value (elt tokens 0)) :to-equal "select")))))
+
 ;;; MAKE-STRING-RULE :escapes -------------------------------------------------
 
 (it-sequential "tokenizer-string-rule-decodes-escapes-test"

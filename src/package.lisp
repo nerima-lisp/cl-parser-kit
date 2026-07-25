@@ -173,6 +173,11 @@
    ;; packrat memoization
    #:memoize
    #:with-parse-memoization
+   #:left-recursion-detected
+   #:left-recursion-detected-parser
+   #:left-recursion-detected-position
+   ;; debugging aid
+   #:trace-parser
    ;; permutation
    #:permute
    ;; operator-precedence expression builder
@@ -214,6 +219,9 @@
    #:at-most
    #:end-by
    #:end-by1
+   #:sep-by-between
+   #:sep-by-at-least
+   #:sep-by-at-most
    ;; symmetric delimiter
    #:surrounded-by
    ;; error recovery

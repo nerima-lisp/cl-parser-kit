@@ -62,14 +62,21 @@ fits equally well whether MATCHER is a bare lambda or one built up inside a
 LET/LET* of precomputed bindings."
   `(make-token-rule :type type :skip-p skip-p :matcher ,matcher))
 
-(defun make-literal-rule (type literal &key skip-p)
+(defun make-literal-rule (type literal &key skip-p (case-sensitive t))
+  "Match LITERAL verbatim (no identifier-boundary check, unlike MAKE-KEYWORD-RULE
+-- `+` or `->` match anywhere, including inside a longer run of punctuation).
+
+With CASE-SENSITIVE NIL the match ignores case (`select`, `SELECT`, and `Select`
+all match `select`); the token TEXT and VALUE are the canonical LITERAL either
+way, exactly as MAKE-KEYWORD-RULE documents."
   (%ensure-non-empty-string literal "literal")
-  (%token-rule
-   (lambda (source index)
-     (multiple-value-bind (matched-p literal-length text value)
-         (%match-literal-token source index literal)
-       (when matched-p
-         (values t literal-length text value))))))
+  (let ((test (if case-sensitive #'string= #'string-equal)))
+    (%token-rule
+     (lambda (source index)
+       (multiple-value-bind (matched-p literal-length text value)
+           (%match-literal-token source index literal test)
+         (when matched-p
+           (values t literal-length text value)))))))
 
 (defun make-keyword-rule (type literal &key skip-p (identifier-char-predicate #'identifier-char-p)
                                           (case-sensitive t))

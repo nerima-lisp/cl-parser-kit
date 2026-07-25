@@ -43,6 +43,7 @@
                (:file "combinators-permutation-test")
                (:file "combinators-expression-test")
                (:file "combinators-memoize-test")
+               (:file "combinators-debug-test")
                (:file "pratt-support")
                (:file "pratt-fixtures")
                (:file "pratt-basic-test")

@@ -36,6 +36,7 @@
                  (:file "combinators-permutation")
                  (:file "combinators-expression")
                  (:file "combinators-memoize")
+                 (:file "combinators-debug")
                  (:file "pratt")
                  (:file "pratt-parse")
                  (:file "pratt-builders")
