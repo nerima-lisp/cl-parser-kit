@@ -10,16 +10,25 @@
                                     (parse-failure-diagnostics failure)))))
 
 (defun %collect-many/cps (parser input current values diagnostics)
-  (%run-progressing-parser/cps
-   parser input current
-   (lambda (value next result)
-     (%collect-many/cps parser input next (cons value values)
-                        (%merge-diagnostics diagnostics result)))
-   (lambda (failure)
-     (%recoverable-success (nreverse values)
-                           current
-                           diagnostics
-                           failure))))
+  "Same match-until-failure loop %RUN-PROGRESSING-PARSER/CPS's CPS callers
+elsewhere in this library express as self-recursion through two fresh
+closures per iteration; written as a plain LOOP instead specifically because
+this is MANY's hot inner loop -- one iteration per matched token -- so
+avoiding a per-iteration closure allocation here is worth the departure from
+the CPS house style everywhere else in this file."
+  (loop
+    (multiple-value-bind (ok value next result)
+        (%run-parser-on-token-vector parser input current)
+      (cond
+        ((not ok)
+         (return (%recoverable-success (nreverse values) current diagnostics result)))
+        ((= next current)
+         (return (%recoverable-success (nreverse values) current diagnostics
+                                       (%progress-failure-object current parser))))
+        (t
+         (setf values (cons value values)
+               diagnostics (%merge-diagnostics diagnostics result)
+               current next))))))
 
 (defun %run-parser-or-recoverable (parser input position fallback-value)
   (%run-parser/if-success

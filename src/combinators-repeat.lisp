@@ -59,16 +59,26 @@ COUNT of 0 succeeds immediately consuming nothing and yielding NIL."
 
 Semantically MANY followed by discarding the list, but never allocates that
 list. Like MANY it rejects a sub-parser that succeeds without consuming input
-(guards against an infinite loop) and propagates a committed sub-failure."
-  (labels ((recur (current diagnostics)
-             (%run-progressing-parser/cps
-              parser input current
-              (lambda (value next result)
-                (declare (ignore value))
-                (recur next (%merge-diagnostics diagnostics result)))
-              (lambda (failure)
-                (%recoverable-success t current diagnostics failure)))))
-    (recur position '())))
+(guards against an infinite loop) and propagates a committed sub-failure.
+
+Written as a plain LOOP rather than the self-recursive-through-two-closures
+CPS shape used elsewhere in this file, for the same reason as
+%COLLECT-MANY/CPS (combinators-sequence.lisp): this is a hot per-token loop,
+and a closure per iteration is allocation this loop can avoid entirely."
+  (loop with current = position
+        with diagnostics = '()
+        do (multiple-value-bind (ok value next result)
+               (%run-parser-on-token-vector parser input current)
+             (declare (ignore value))
+             (cond
+               ((not ok)
+                (return (%recoverable-success t current diagnostics result)))
+               ((= next current)
+                (return (%recoverable-success t current diagnostics
+                                              (%progress-failure-object current parser))))
+               (t
+                (setf diagnostics (%merge-diagnostics diagnostics result)
+                      current next))))))
 
 (defun skip-many1 (parser)
   "Parse PARSER one or more times, discarding every result, yielding T.
@@ -90,16 +100,21 @@ MANY's progress guard and committed-failure propagation."
   (make-parser
    :name :fold-many
    :fn (lambda (input position)
-         (labels ((recur (current accumulator diagnostics)
-                    (%run-progressing-parser/cps
-                     parser input current
-                     (lambda (value next result)
-                       (recur next
-                              (funcall function accumulator value)
-                              (%merge-diagnostics diagnostics result)))
-                     (lambda (failure)
-                       (%recoverable-success accumulator current diagnostics failure)))))
-           (recur position initial '())))))
+         (loop with current = position
+               with accumulator = initial
+               with diagnostics = '()
+               do (multiple-value-bind (ok value next result)
+                      (%run-parser-on-token-vector parser input current)
+                    (cond
+                      ((not ok)
+                       (return (%recoverable-success accumulator current diagnostics result)))
+                      ((= next current)
+                       (return (%recoverable-success accumulator current diagnostics
+                                                     (%progress-failure-object current parser))))
+                      (t
+                       (setf accumulator (funcall function accumulator value)
+                             diagnostics (%merge-diagnostics diagnostics result)
+                             current next))))))))
 
 (define-parser-function many-till (parser end) :many-till
   "Parse PARSER repeatedly until END succeeds; return the list of PARSER values.
@@ -110,30 +125,44 @@ END failed without committing, one PARSER is required. The parser fails when
 PARSER fails before END matches, or when END commits input and then fails; such
 a failure is committed iff any input was consumed, so an enclosing OPT/MANY does
 not silently backtrack past a partially-parsed run."
-  (labels ((recur (current values diagnostics)
-             (%run-parser/if-success
-              end input current
-              (lambda (end-value end-next end-result)
-                (declare (ignore end-value))
-                (%success (nreverse values)
-                          end-next
-                          (%merge-diagnostics diagnostics end-result)))
-              (lambda (end-result end-next)
-                (declare (ignore end-next))
-                (if (parse-failure-committed-p end-result)
-                    (%committed-failure-from end-result)
-                    (%run-progressing-parser/cps
-                     parser input current
-                     (lambda (value next result)
-                       (recur next
-                              (cons value values)
-                              (%merge-diagnostics diagnostics result)))
-                     (lambda (item-failure)
-                       (let ((merged (merge-parse-failures end-result item-failure)))
-                         (if (= current position)
-                             (%failure-from merged)
-                             (%committed-failure-from merged))))))))))
-    (recur position '() '())))
+  ;; A plain LOOP rather than the self-recursive-through-closures CPS shape
+  ;; used elsewhere in this file, for the same reason as %COLLECT-MANY/CPS
+  ;; (combinators-sequence.lisp): this is a hot per-token loop, and a closure
+  ;; per iteration is allocation it can avoid entirely. Two levels of the
+  ;; original CPS dispatch collapse into the COND below: try END first (the
+  ;; outer %RUN-PARSER/IF-SUCCESS), and only on END's uncommitted failure try
+  ;; PARSER (the inner %RUN-PROGRESSING-PARSER/CPS, whose own "succeeded but
+  ;; did not progress" failure is reproduced explicitly via
+  ;; %PROGRESS-FAILURE-OBJECT below).
+  (loop with current = position
+        with values = '()
+        with diagnostics = '()
+        do (multiple-value-bind (end-ok end-value end-next end-result)
+               (%run-parser-on-token-vector end input current)
+             (declare (ignore end-value))
+             (cond
+               (end-ok
+                (return (%success (nreverse values) end-next
+                                  (%merge-diagnostics diagnostics end-result))))
+               ((parse-failure-committed-p end-result)
+                (return (%committed-failure-from end-result)))
+               (t
+                (multiple-value-bind (item-ok value next item-result)
+                    (%run-parser-on-token-vector parser input current)
+                  (cond
+                    ((and item-ok (/= next current))
+                     (setf values (cons value values)
+                           diagnostics (%merge-diagnostics diagnostics item-result)
+                           current next))
+                    (t
+                     (let ((merged (merge-parse-failures
+                                    end-result
+                                    (if item-ok
+                                        (%progress-failure-object current parser)
+                                        item-result))))
+                       (return (if (= current position)
+                                   (%failure-from merged)
+                                   (%committed-failure-from merged))))))))))))
 
 (defun fold-many1 (function initial parser)
   "Like FOLD-MANY but requires PARSER to match at least once.
@@ -226,24 +255,29 @@ failure always propagates. MIN and MAX are non-negative integers with MIN <= MAX
   (make-parser
    :name :times-between
    :fn (lambda (input position)
-         (labels ((recur (current count values diagnostics)
-                    (if (>= count max)
-                        (%success (nreverse values) current diagnostics)
-                        (%run-progressing-parser/cps
-                         parser input current
-                         (lambda (value next result)
-                           (recur next
-                                  (1+ count)
-                                  (cons value values)
-                                  (%merge-diagnostics diagnostics result)))
-                         (lambda (failure)
+         (loop with current = position
+               with count = 0
+               with values = '()
+               with diagnostics = '()
+               do (when (>= count max)
+                    (return (%success (nreverse values) current diagnostics)))
+                  (multiple-value-bind (ok value next result)
+                      (%run-parser-on-token-vector parser input current)
+                    (cond
+                      ((and ok (/= next current))
+                       (setf count (1+ count)
+                             values (cons value values)
+                             diagnostics (%merge-diagnostics diagnostics result)
+                             current next))
+                      (t
+                       (let ((failure (if ok (%progress-failure-object current parser) result)))
+                         (return
                            (if (>= count min)
                                (%recoverable-success (nreverse values)
                                                      current diagnostics failure)
                                (if (= current position)
                                    (%failure-from failure)
-                                   (%committed-failure-from failure))))))))
-           (recur position 0 '() '())))))
+                                   (%committed-failure-from failure))))))))))))
 
 (defun at-least (min parser)
   "Parse PARSER at least MIN times with no upper bound, returning the list of

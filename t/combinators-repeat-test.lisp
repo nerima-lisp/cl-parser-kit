@@ -92,6 +92,15 @@
       (expect (parse-failure-position failure) :to-equal 1)
       (expect (parse-failure-expected failure) :to-equal :number))))
 
+(it-sequential "combinator-skip-many-rejects-non-advancing-parser-test"
+  ;; Mirrors MANY's own guard test (combinators-core-test.lisp):
+  ;; RETURN-PARSER always succeeds without consuming input, so an unguarded
+  ;; loop would never terminate.
+  (let ((parser (skip-many (return-parser :ok))))
+    (assert-combinator-failure (parse-tokens parser #())
+        (value next failure)
+      (expect (parse-failure-expected failure) :to-equal :progressing-parser))))
+
 (it-sequential "combinator-skip-many1-requires-one-match-test"
   (with-combinator-tokens (tokens '((:type :comma :text ",")))
     (let ((parser (skip-many1 (type-token :identifier))))
@@ -123,6 +132,14 @@
           (value next failure)
         (expect next :to-equal 0)
         (expect value :to-equal 41)))))
+
+(it-sequential "combinator-fold-many-rejects-non-advancing-parser-test"
+  ;; Mirrors MANY's own guard test (combinators-core-test.lisp): RETURN-PARSER
+  ;; always succeeds without consuming input.
+  (let ((parser (fold-many #'+ 0 (return-parser 1))))
+    (assert-combinator-failure (parse-tokens parser #())
+        (value next failure)
+      (expect (parse-failure-expected failure) :to-equal :progressing-parser))))
 
 ;;; FOLD-MANY1 ----------------------------------------------------------------
 
