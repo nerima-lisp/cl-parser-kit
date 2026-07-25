@@ -276,7 +276,7 @@
         system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
-          test = pkgs.writeShellApplication {
+          test' = pkgs.writeShellApplication {
             name = "cl-parser-kit-test";
             runtimeInputs = [
               pkgs.perl
@@ -293,15 +293,13 @@
             '';
           };
         in
-        {
-          default = {
-            type = "app";
-            program = "${test}/bin/cl-parser-kit-test";
-          };
+        rec {
           test = {
             type = "app";
-            program = "${test}/bin/cl-parser-kit-test";
+            program = "${test'}/bin/cl-parser-kit-test";
+            meta.description = "Run the cl-parser-kit test suite against the working tree";
           };
+          default = test;
         }
       );
     };
