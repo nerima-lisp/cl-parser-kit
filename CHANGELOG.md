@@ -1,6 +1,55 @@
 # Changelog
 
-## Unreleased
+All notable changes to this project are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+<!--
+Heading format is fixed across the org:
+
+    ## [X.Y.Z] - YYYY-MM-DD
+
+The version is bracketed, the separator is an ASCII hyphen, and the date is
+ISO 8601. .github/workflows/release.yml extracts the section matching the
+pushed tag as the GitHub Release body, so a heading that deviates makes the
+release publish an empty body and fail. Keep `## [Unreleased]` at the top.
+-->
+
+## [Unreleased]
+
+### Changed
+
+- the test system is now `cl-parser-kit/test`, defined in `cl-parser-kit.asd`
+  alongside the runtime system. `cl-parser-kit-test.asd` and the
+  `cl-parser-kit-test` system name are gone. Consumers running the suite via
+  `(asdf:test-system "cl-parser-kit")` are unaffected; anyone loading
+  `cl-parser-kit-test` by name must switch to `cl-parser-kit/test`
+- the test entry point moved from `scripts/run-tests.lisp` to `run-tests.lisp`
+  at the repository root
+- the explanatory documents that used to sit at the repository root — `API.md`,
+  `ARCHITECTURE.md`, `EXAMPLES.md`, `PARSING_PATTERNS.md`, `ROADMAP.md`,
+  `MAINTAINERS.md`, `RELEASING.md` and `VERSIONING.md` — were already duplicated
+  verbatim by the published documentation site, so the root copies were removed
+  and <https://nerima-lisp.github.io/cl-parser-kit/> is now the single home.
+  `RELEASING.md` and `VERSIONING.md` were largely restatements of the org-wide
+  release and versioning standards; only the repository-specific parts survive,
+  as `docs/src/development.md` and `docs/src/compatibility.md`
+- `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, `GOVERNANCE.md`, `SECURITY.md` and
+  `SUPPORT.md` were removed: GitHub serves these org-wide from
+  <https://github.com/nerima-lisp/.github>, and local copies meant 21
+  repositories to update for one policy change
+- the README is now an entry point rather than a manual, 887 lines down to
+  under 150. Nothing was lost — every section removed already existed on the
+  documentation site
+
+### Removed
+
+- `scripts/run-release-audit.sh`. It asserted cross-references between the
+  root-level policy documents that the org now owns, and duplicated the rest of
+  the gate that `nix flake check` already runs with build caching
+
+### Fixed
 
 - fixed `bootstrap-load-project-asd-definitions-preserves-relative-component-paths-test`
   failing on any checkout whose path contains a symlink. It compared ASDF's
@@ -13,7 +62,7 @@
   `git clone` of the tag in a scratch directory rather than against the working tree, which
   is the only way the symlinked-path case comes up
 
-## 1.0.0 - 2026-07-26
+## [1.0.0] - 2026-07-26
 
 The first stable release. `v1.0.0` freezes the 290 symbols exported from the
 `cl-parser-kit` package under semantic versioning: from here, a breaking change
@@ -205,7 +254,7 @@ answerable from the running image rather than only from `API.md`.
   rather than the root repo most contributors start from. Added the
   matching Expectations and Release Checklist bullets to the root file
 
-## 0.4.0 - 2026-07-25
+## [0.4.0] - 2026-07-25
 
 - added `left-recursion-detected` — `memoize` now signals it instead of
   looping until the generic recursion-depth guard trips, giving a precise
@@ -247,7 +296,7 @@ answerable from the running image rather than only from `API.md`.
   `src/package.lisp` references rewritten to GitHub blob links so the
   rendered site does not depend on the surrounding source tree
 
-## 0.3.0 - 2026-07-24
+## [0.3.0] - 2026-07-24
 
 - rewrote `%pratt-start-expression/cps` (`pratt-parse.lisp`) to reuse the
   existing `%pratt-led-step/cps` macro instead of hand-duplicating its exact
@@ -577,7 +626,7 @@ answerable from the running image rather than only from `API.md`.
   chain at the public API boundary, respectively, none of which fit a
   success/failure continuation split
 
-## 0.2.0 - 2026-07-20
+## [0.2.0] - 2026-07-20
 
 - capped caller-supplied token streams with `*maximum-parser-tokens*`, which
   bounds `run-parser`, `parse-tokens` / `parse-all`, and `parse-pratt` /
@@ -619,7 +668,7 @@ answerable from the running image rather than only from `API.md`.
   traversal from tree equality, and bucketed operator matching by leading
   character
 
-## 0.1.0 - 2026-07-20
+## [0.1.0] - 2026-07-20
 
 - added predicate token-run scanners: `take-while` / `take-while1` match a run of
   consecutive tokens satisfying a predicate (returning the list; `take-while1`
@@ -890,9 +939,3 @@ answerable from the running image rather than only from `API.md`.
 - added roadmap and release-note placeholders for the public OSS surface
 - add `ast-node->sexp` and `cst-node->sexp` for stable tree inspection output
 - add CST-focused example coverage and regression tests for tree serialization
-
-## Notes
-
-This project does not currently ship formal versioned releases. When releases are
-introduced, this file will track user-visible changes in a conventional
-`Keep a Changelog` style.
