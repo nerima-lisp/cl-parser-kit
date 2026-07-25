@@ -21,6 +21,20 @@
   (let ((text (%string-range source index end)))
     (values t (- end index) text value)))
 
+(defun %emit-scanned-token-match (source index end value-function)
+  "Like %EMIT-TOKEN-MATCH, but for the common case where TEXT and VALUE cover
+the identical (INDEX . END) range: computes that substring exactly once and
+reuses it both as the returned TEXT and as VALUE-FUNCTION's argument, instead
+of %EMIT-TOKEN-MATCH's own %STRING-RANGE call redundantly re-extracting the
+same characters a second time. Not a replacement for %EMIT-TOKEN-MATCH
+itself, which stays necessary wherever TEXT and VALUE genuinely differ
+in content (%MATCH-DELIMITED-TOKEN's delimiter-excluding string content,
+MAKE-LITERAL-RULE's trimmed whitespace) -- shared by %MATCH-SCANNED-TOKEN,
+MAKE-PREDICATE-RULE, and %MAKE-PREFIXED-COMMENT-RULE
+(TOKENIZER-RULES-TEXT.LISP), whose TEXT and VALUE never do."
+  (let ((text (%string-range source index end)))
+    (values t (- end index) text (funcall value-function text))))
+
 (defmacro %skip-or-match (skip-p length &body non-skip-values-form)
   "Every rule constructor's matcher (here and in TOKENIZER-RULES-TEXT.LISP /
 TOKENIZER-RULES-EXTRA.LISP) branches the same way once a candidate match's
@@ -47,9 +61,7 @@ work) even when SKIP-P is true, defeating the whole point."
   (when (and (< index (length source))
              (funcall start-predicate (char source index)))
     (let ((end (funcall scanner source index)))
-      (%emit-token-match source index end
-                         (funcall value-function
-                                  (%string-range source index end))))))
+      (%emit-scanned-token-match source index end value-function))))
 
 (defmacro %token-rule (matcher)
   "Construct a TOKEN-RULE from the enclosing rule constructor's own TYPE and
@@ -146,9 +158,7 @@ not need MAKE-LITERAL-RULE's multi-character matching."
      (let ((end (%scan-while source index predicate)))
        (when (>= (- end index) min-length)
          (%skip-or-match skip-p (- end index)
-           (%emit-token-match source index end
-                              (funcall value-function
-                                       (%string-range source index end)))))))))
+           (%emit-scanned-token-match source index end value-function)))))))
 
 (defun make-identifier-rule (&key (type :identifier)
                                   skip-p

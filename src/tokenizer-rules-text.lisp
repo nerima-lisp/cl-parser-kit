@@ -88,9 +88,7 @@ literally."
          (let ((end (funcall end-fn source match-end)))
            ;; Comments are almost always skipped; see %SKIP-OR-MATCH.
            (%skip-or-match skip-p (- end index)
-               (%emit-token-match source index end
-                                  (funcall value-function
-                                           (%string-range source index end))))))))))
+               (%emit-scanned-token-match source index end value-function))))))))
 
 (defun make-line-comment-rule (&key (type :comment) (prefix ";") (skip-p t) (value-function #'identity))
   (%ensure-non-empty-string prefix "prefix")
