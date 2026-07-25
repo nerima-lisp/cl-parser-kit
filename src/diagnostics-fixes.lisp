@@ -169,13 +169,20 @@ valid. NIL entries are ignored. Fixes sharing a start position preserve input
 order, so same-position zero-width insertions are emitted in that order. Pair it
 with DIAGNOSTIC-FIXES to auto-apply a diagnostic's suggestions:
   (apply-fixes source (diagnostic-fixes diagnostic))."
-  (let* ((present-fixes (%present-fixes fixes))
-         (ascending (stable-sort present-fixes
-                                 #'<
-                                 :key (lambda (fix) (span-start (fix-it-span fix)))))
-         (regions (%non-overlapping-fix-it-regions source ascending)))
-    (if regions
-        (%apply-non-overlapping-fixes source regions)
-        (%apply-sequential-fixes
-         source
-         (%descending-fixes-by-start-preserving-equal-order ascending)))))
+  (let ((present-fixes (%present-fixes fixes)))
+    ;; No fix survives filtering (FIXES was empty or all-NIL) -- the common
+    ;; case for a clean parse's diagnostics -- so return SOURCE itself rather
+    ;; than pay for a sort, a region scan, and a full character-by-character
+    ;; copy through %APPLY-SEQUENTIAL-FIXES to rebuild a string identical to
+    ;; the one already in hand.
+    (if (null present-fixes)
+        source
+        (let* ((ascending (stable-sort present-fixes
+                                       #'<
+                                       :key (lambda (fix) (span-start (fix-it-span fix)))))
+               (regions (%non-overlapping-fix-it-regions source ascending)))
+          (if regions
+              (%apply-non-overlapping-fixes source regions)
+              (%apply-sequential-fixes
+               source
+               (%descending-fixes-by-start-preserving-equal-order ascending)))))))

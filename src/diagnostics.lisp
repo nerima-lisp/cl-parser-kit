@@ -78,18 +78,24 @@ failures. Rebind or SETF to raise it for intentionally broad recovery reports.")
                           (%parse-failure-resource-limit kind count limit)))))
 
 (defun %merge-parse-failure-lists-unique (kind left right limit)
-  (loop with count = 0
-        with seen = (make-hash-table :test 'equal)
-        with merged = '()
-        for values in (list left right)
-        do (dolist (item (%ensure-parse-failure-list-count kind values limit))
-             (incf count)
-             (when (> count limit)
-               (%parse-failure-resource-limit kind count limit))
-             (unless (gethash item seen)
-               (setf (gethash item seen) t)
-               (push item merged)))
-        finally (return (nreverse merged))))
+  ;; LEFT and RIGHT are both frequently NIL -- most parse failures at a given
+  ;; position carry only a handful of expected tokens, and %ALT/%CHOICE merge
+  ;; failures from every tried branch -- so skip the hash table entirely
+  ;; rather than allocate one just to discover there is nothing to
+  ;; deduplicate. See %DO-PROPER-LIST (core.lisp) for the same pattern.
+  (when (or left right)
+    (loop with count = 0
+          with seen = (make-hash-table :test 'equal)
+          with merged = '()
+          for values in (list left right)
+          do (dolist (item (%ensure-parse-failure-list-count kind values limit))
+               (incf count)
+               (when (> count limit)
+                 (%parse-failure-resource-limit kind count limit))
+               (unless (gethash item seen)
+                 (setf (gethash item seen) t)
+                 (push item merged)))
+          finally (return (nreverse merged)))))
 
 (defun %append-parse-failure-diagnostic (diagnostics diagnostic)
   (%merge-parse-failure-lists :diagnostic-count

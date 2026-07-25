@@ -199,6 +199,14 @@ shared by every DIAGNOSTIC-RELATED-COUNT-LIMIT-* test below."
     (expect (apply-fix-it "abcde" prefix) :to-equal "ABcde")
     (expect (apply-fix-it "abcde" suffix) :to-equal "abcdeZ")))
 
+(it-sequential "apply-fixes-with-no-fixes-returns-source-unchanged-test"
+  ;; Exercises APPLY-FIXES's fast path: when no fix survives %PRESENT-FIXES
+  ;; filtering (an empty list, or a list of only NIL entries), it returns
+  ;; SOURCE itself rather than rebuilding an equal string.
+  (let ((source "hello world"))
+    (expect (apply-fixes source nil) :to-be source)
+    (expect (apply-fixes source (list nil nil)) :to-be source)))
+
 (it-sequential "apply-fixes-applies-multiple-back-to-front-test"
   ;; Two edits whose earlier one would shift the later's offsets if applied
   ;; front-to-back; APPLY-FIXES orders them so both land correctly.
@@ -507,6 +515,16 @@ rather than the non-overlapping fast path."
       (expect (parse-failure-position merged) :to-equal 1)
       (expect (sort (copy-list (parse-failure-expected merged)) #'string< :key #'symbol-name) :to-equal '(:identifier :number))
       (expect (parse-failure-actual merged) :to-equal :plus))))
+
+(it-sequential "parse-failure-merge-with-no-expected-items-skips-dedup-hash-test"
+  ;; Both failures' EXPECTED lists are NIL here, exercising
+  ;; %MERGE-PARSE-FAILURE-LISTS-UNIQUE's fast path that skips building a
+  ;; dedup hash table entirely when there is nothing to deduplicate.
+  (let ((left (make-parse-failure :position 1 :actual :plus))
+        (right (make-parse-failure :position 1 :actual :plus)))
+    (let ((merged (merge-parse-failures left right)))
+      (expect (parse-failure-position merged) :to-equal 1)
+      (expect (parse-failure-expected merged) :to-be-falsy))))
 
 (it-sequential "parse-failure-merge-deduplicates-overlapping-expected-items-test"
   ;; %MERGE-PARSE-FAILURE-LISTS-UNIQUE's dedup hash must actually skip an item

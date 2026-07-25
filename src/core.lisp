@@ -68,22 +68,27 @@ Shared by every public boundary that folds or renders a caller-supplied list
 under a resource limit -- parse-failure expected/diagnostic lists, fix-it
 batches, and diagnostic related-item batches all had their own copy of this
 exact loop, differing only in what ITEM-FN does with each item and which
-condition ON-LIMIT-EXCEEDED signals."
-  (loop with count = 0
-        with seen = (make-hash-table :test 'eq)
-        for tail = list then (cdr tail)
-        while (consp tail)
-        for item = (car tail)
-        do (when (gethash tail seen)
-             (funcall on-limit-exceeded (1+ limit)))
-           (setf (gethash tail seen) t)
-           (incf count)
-           (when (> count limit)
-             (funcall on-limit-exceeded count))
-           (funcall item-fn item)
-        finally
-           (unless (null tail)
-             (funcall on-limit-exceeded (1+ limit)))))
+condition ON-LIMIT-EXCEEDED signals. Most callers already guard the empty-LIST
+case themselves before calling in (an empty list has nothing to fold or
+render), but the guard lives here too -- see %DO-PROPER-LIST and
+%DO-TREE-CHILDREN for the same pattern -- so every caller, present or future,
+gets it for free rather than needing to remember it."
+  (when list
+    (loop with count = 0
+          with seen = (make-hash-table :test 'eq)
+          for tail = list then (cdr tail)
+          while (consp tail)
+          for item = (car tail)
+          do (when (gethash tail seen)
+               (funcall on-limit-exceeded (1+ limit)))
+             (setf (gethash tail seen) t)
+             (incf count)
+             (when (> count limit)
+               (funcall on-limit-exceeded count))
+             (funcall item-fn item)
+          finally
+             (unless (null tail)
+               (funcall on-limit-exceeded (1+ limit))))))
 
 (defmacro %do-proper-list ((cursor thing) &body body)
   "Walk THING cons by cons, binding CURSOR to the current cons cell and
@@ -92,18 +97,22 @@ it expands inside the walk's own LOOP and shares its implicit NIL block. An
 improper tail or a repeated (EQ) cons signals immediately. Factors out the
 cycle/properness check %CHECK-PROPER-ACYCLIC-LIST and ENSURE-VECTOR-UP-TO's
 LIST clause each used to duplicate, down to the identical error messages."
-  `(loop with seen = (make-hash-table :test 'eq)
-         with ,cursor = ,thing
-         do (cond
-              ((null ,cursor) (return))
-              ((not (consp ,cursor))
-               (error "Expected a proper list, got improper tail ~S." ,cursor))
-              ((gethash ,cursor seen)
-               (error "Expected a proper acyclic list, got circular list."))
-              (t
-               (setf (gethash ,cursor seen) t)
-               ,@body
-               (setf ,cursor (cdr ,cursor))))))
+  `(when ,thing
+     ;; THING is checked once, up front, so the empty list -- by far the most
+     ;; common case, since every diagnostics-less parser step's diagnostics
+     ;; list is NIL -- never pays for the hash table below at all.
+     (loop with seen = (make-hash-table :test 'eq)
+           with ,cursor = ,thing
+           do (cond
+                ((null ,cursor) (return))
+                ((not (consp ,cursor))
+                 (error "Expected a proper list, got improper tail ~S." ,cursor))
+                ((gethash ,cursor seen)
+                 (error "Expected a proper acyclic list, got circular list."))
+                (t
+                 (setf (gethash ,cursor seen) t)
+                 ,@body
+                 (setf ,cursor (cdr ,cursor)))))))
 
 (defun %check-proper-acyclic-list (thing)
   (%do-proper-list (cursor thing))

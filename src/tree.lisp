@@ -43,19 +43,27 @@ trees.")
 (defmacro %do-tree-children ((child children &optional result) &body body)
   (let ((tail (gensym "TAIL"))
         (seen (gensym "SEEN")))
-    `(loop with ,seen = (make-hash-table :test 'eq)
-           for ,tail = ,children then (cdr ,tail)
-           while ,tail
-           do (cond
-                ((consp ,tail)
-                 (when (gethash ,tail ,seen)
-                   (error 'tree-child-list-invalid :kind :circular))
-                 (setf (gethash ,tail ,seen) t)
-                 (let ((,child (car ,tail)))
-                   ,@body))
-                (t
-                 (error 'tree-child-list-invalid :kind :improper)))
-           finally (return ,result))))
+    ;; A leaf -- CHILDREN NIL -- is the single most common node in any real
+    ;; tree, and every traversal (%TREE-WALK, %TREE-MAP, %TREE-DEPTH, ->STRING,
+    ;; ->DOT, ->SEXP, equality...) visits every node, so this fast path skips
+    ;; the cycle-detection hash table entirely for the case that dominates
+    ;; real trees, rather than allocating one just to find CHILDREN empty.
+    ;; See %DO-PROPER-LIST (core.lisp) for the identical pattern.
+    `(if (null ,children)
+         ,result
+         (loop with ,seen = (make-hash-table :test 'eq)
+               for ,tail = ,children then (cdr ,tail)
+               while ,tail
+               do (cond
+                    ((consp ,tail)
+                     (when (gethash ,tail ,seen)
+                       (error 'tree-child-list-invalid :kind :circular))
+                     (setf (gethash ,tail ,seen) t)
+                     (let ((,child (car ,tail)))
+                       ,@body))
+                    (t
+                     (error 'tree-child-list-invalid :kind :improper)))
+               finally (return ,result)))))
 
 (defun %tree-children-list (children)
   "Same cycle-detecting walk as %DO-TREE-CHILDREN, collecting each child into a
