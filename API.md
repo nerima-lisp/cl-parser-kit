@@ -625,7 +625,7 @@ If you are new to the library, start here:
 
 ## Quick Start Surface
 
-`README.md` should mirror this exact bullet list in its public API section so
+`README.md` mirrors this exact bullet list in its public API section so
 the onboarding surface stays stable across both entry-point documents.
 
 - `make-span`

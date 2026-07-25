@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+- fixed another genuinely broken code example in `EXAMPLES.md`'s "Accept An Optional Trailing
+  Separator" section (and its `docs/src/examples.md` mirror): the `delimited-sep-end-by` call's
+  closing parens were one short, so the reader treated the following `(list ...)` body as a
+  third, malformed `let*` binding and never closed the form, raising `END-OF-FILE` when the
+  snippet was actually run. Found and confirmed via a dedicated re-execution audit of every
+  ```lisp block in the repository's docs (not just the previously-fixed Pratt callback example)
+- fixed `API.md`'s "Quick Start Surface" section describing itself as something `README.md`
+  "should mirror" (prescriptive) when it already does mirror it exactly; reworded to match
+  `docs/src/api.md`'s already-accurate present-tense phrasing
+- backported the test-package name (`:cl-parser-kit/test`) and the `scripts/run-tests.lisp`
+  reproducible invocation from `README.md`'s Testing section into `docs/src/installation.md`,
+  which was missing both
+- fixed `docs/src/versioning.md` pointing readers to GitHub's Releases page for "what changed in
+  each release" instead of `CHANGELOG.md` like the root `VERSIONING.md` does; the Releases page is
+  incomplete (only `v0.1.0`/`v0.2.0` have Release objects, later tags are tag-only), so the mirror
+  was sending readers to a source that cannot actually answer the question it claimed to answer
 - raised `ci.yml`'s `nix flake check` timeout (660s -> 2200s inner, 12 -> 40 step
   `timeout-minutes`, 20 -> 45 job `timeout-minutes`) after confirming via the actual failed
   CI run for the `paredit-cli` v0.8.0 bump that it timed out mid-build: paredit-cli's 114

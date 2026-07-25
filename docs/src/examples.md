@@ -311,7 +311,7 @@ if?"
           (cl-parser-kit:literal "(" :type :lparen)
           (cl-parser-kit:type-token-text :identifier)
           (cl-parser-kit:literal "," :type :comma)
-          (cl-parser-kit:literal ")" :type :rparen)))
+          (cl-parser-kit:literal ")" :type :rparen))))
   (list (cl-parser-kit:parse-source parser "(answer, result)" tokenizer)
         (cl-parser-kit:parse-source parser "(answer, result,)" tokenizer)))
 ```
