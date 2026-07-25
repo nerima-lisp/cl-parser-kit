@@ -341,6 +341,21 @@ failure propagates).
     - `with-parse-memoization` — a macro establishing a fresh per-parse
       cache for the `memoize` parsers run inside it; wrap a top-level
       parse call
+    - `left-recursion-detected` — signalled by `memoize`, instead of
+      computing forever, if a memoized parser (directly or through other
+      memoized parsers) calls itself again at the same position before its
+      first call there has returned; `left-recursion-detected-parser` /
+      `left-recursion-detected-position` read the offending parser and
+      position. `memoize` is plain packrat memoization, not a
+      left-recursion algorithm -- rewrite the rule (e.g. via `sep-by` /
+      `chainl1` / `chainl`) or use the Pratt layer's
+      `register-infix-left`, which does support left-recursive grammars
+- debugging:
+    - `trace-parser` — run a parser unchanged, printing one line per call
+      to `*trace-output*` (or an explicit `:stream`) reporting its
+      position and outcome; `:label` overrides the printed name,
+      defaulting to the wrapped parser's own `parser-name` (megaparsec's
+      `dbg`)
 - permutation:
     - `permute` — parse a fixed set of parsers in any order, each exactly
       once, returning their values in the original argument order
@@ -387,6 +402,17 @@ failure propagates).
     - `end-by` / `end-by1` — like `sep-by` but every item must be
       *followed* by the separator (a required terminator, e.g. `item ;`
       runs), as opposed to `sep-end-by`'s optional trailing separator
+    - `sep-by-between` — like `times-between` but for `sep-by`: parse a
+      separated list at least a minimum and at most a maximum number of
+      times (`(sep-by-between 0 max p s)` allows zero items, unlike
+      `times-between`'s unseparated items); a separator failure past the
+      minimum simply stops, an item failure after a matched separator is
+      always committed
+    - `sep-by-at-least` / `sep-by-at-most` — the open-ended variants:
+      `sep-by-at-least` parses a minimum or more (`(sep-by-at-least 0 p
+      s)` is `(sep-by p s)`, `(sep-by-at-least 1 p s)` is `(sep-by1 p
+      s)`), `sep-by-at-most` parses zero up to a cap
+      (`(sep-by-between 0 max p s)`)
     - `surrounded-by` — parse a body wrapped in a matching delimiter on
       both sides, `(surrounded-by d p)` is `(between d p d)`, for quotes
       or symmetric brackets

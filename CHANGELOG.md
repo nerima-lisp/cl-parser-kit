@@ -17,6 +17,13 @@
   guide entirely until now; mirrored the same additions into
   `docs/src/parsing-patterns.md` (the published MkDocs site's copy, manually
   kept in sync with the root guide)
+- closed a pre-existing (not introduced this release) gap in
+  `docs/src/api.md`, the published MkDocs site's copy of `API.md`: it was
+  missing `left-recursion-detected`, the entire "debugging: `trace-parser`"
+  category, and `sep-by-between`/`sep-by-at-least`/`sep-by-at-most` --
+  likely never synced when those landed. Verified with a systematic
+  symbol-set diff against the root file, not spot-checking, that every
+  other documented symbol matches between the two
 
 ## 0.4.0 - 2026-07-25
 
