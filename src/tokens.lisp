@@ -13,7 +13,6 @@
 (defun %token-metadata-source (token)
   (let ((metadata (and token (token-metadata token))))
     (and (listp metadata)
-         (getf metadata :source)
          (stringp (getf metadata :source))
          (getf metadata :source))))
 

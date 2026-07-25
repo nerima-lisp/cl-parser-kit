@@ -165,11 +165,11 @@ START/END offsets, data with TEST)."
                             ((and (null left-tail) (null right-tail))
                              (return t))
                             ((or (null left-tail) (null right-tail))
-                             (return nil))
+                             (return))
                             ((not (node-equal (car left-tail)
                                               (car right-tail)
                                               (1+ depth)))
-                             (return nil))
+                             (return))
                             (t
                              (setf left-tail (cdr left-tail)
                                    right-tail (cdr right-tail)))))))

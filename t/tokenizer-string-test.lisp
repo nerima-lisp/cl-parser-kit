@@ -28,7 +28,7 @@
            (%make-tokenizer-token-spec :type :identifier :value "abc")))))
 
 (it-sequential "tokenizer-string-rule-escape-and-empty-test"
-  (let* ((tokenizer (%make-string-tokenizer :escape-char #\\)))
+  (let ((tokenizer (%make-string-tokenizer :escape-char #\\)))
     ;; An escaped escape character collapses to a single literal backslash.
     (assert-tokenizer-tokens
      (tokenize (format nil "~Ca~C~Cb~C" #\" #\\ #\\ #\") tokenizer)

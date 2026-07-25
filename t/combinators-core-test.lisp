@@ -170,7 +170,7 @@
       (expect (parse-failure-expected failure) :to-equal :identifier))))
 
 (it-sequential "parser-public-accessor-contract-test"
-  (let* ((parser (make-parser
+  (let ((parser (make-parser
                   :name :public-contract
                   :fn (lambda (_input position)
                         (declare (ignore _input))

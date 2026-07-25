@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- ran `paredit inspect lint` (a full sweep of ~90 within-file logic-bug checks) across all of
+  `src/`+`t/` for the first time; fixed the 13 genuine findings after verifying each by hand
+  (a real redundant `and` operand in `%token-metadata-source`, two `setf`-of-`1+` spots that
+  are just `incf`, two single-binding `let*` that are just `let`, one `apply`-of-a-literal-list
+  that's a direct call, two `(= x 0)`/`(> (length x) 0)` spots that are `zerop`/`plusp`, one
+  double-negated `unless (null ...)` that's `when`, and four explicit `nil` returns that are the
+  implicit default) -- and investigated, then declined, the other 39 as either tool false
+  positives (`char` used as a parameter/`let` name misread as a 0-arg accessor call, 20 hits;
+  `` `(progn ,@body) ``-style macro-expansion wrappers misread as wrapping one static form, 11
+  hits across two rules) or genuinely-fine established Lisp idioms whose suggested rewrite would
+  reduce clarity, not improve it (an empty-case-first `if`, or an `and`/`or` of `null` checks
+  that reads more directly than its De Morgan form, 8 hits)
 - bumped the `cl-weave` test dependency 0.11.0 -> 1.0.0 (cl-weave's first
   stable, SemVer-committed release; audit-driven correctness fixes only in
   reporters/matchers/CLI/runner internals, no change to any macro or API this

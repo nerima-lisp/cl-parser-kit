@@ -42,10 +42,7 @@
 (it-sequential "combinator-permute-rejects-excessive-parser-list-test"
   (let ((*maximum-parser-repetition-count* 2))
     (expect (lambda ()
-              (apply #'permute
-                     (list (type-token :a)
-                           (type-token :b)
-                           (type-token :c))))
+              (permute (type-token :a) (type-token :b) (type-token :c)))
             :to-throw 'error)))
 
 (it-sequential "combinator-permute-of-no-parsers-succeeds-empty-test"

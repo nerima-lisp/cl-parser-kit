@@ -27,7 +27,7 @@
                (unless end
                  (return))
                (let ((identifier (subseq contents (1+ start) end)))
-                 (when (> (length identifier) 0)
+                 (when (plusp (length identifier))
                    (push (string-downcase identifier) identifiers)))
                (setf position (1+ end)))
           finally (return (nreverse identifiers)))))

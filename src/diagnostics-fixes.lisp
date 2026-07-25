@@ -49,10 +49,10 @@ then emits them in their original relative order)."
         (unless (and (<= 0 raw-start)
                      (<= raw-start raw-end)
                      (<= raw-end length))
-          (return-from %non-overlapping-fix-it-regions nil)))
+          (return-from %non-overlapping-fix-it-regions)))
       (multiple-value-bind (start end replacement) (%fix-it-region source fix)
         (when (%fix-it-region-conflicts-p start end previous-start previous-end)
-          (return-from %non-overlapping-fix-it-regions nil))
+          (return-from %non-overlapping-fix-it-regions))
         (push (list start end replacement) regions)
         (setf previous-start start
               previous-end end)))))

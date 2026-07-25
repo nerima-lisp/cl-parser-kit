@@ -107,7 +107,7 @@ identifier character."
          (multiple-value-bind (matched-p literal-length text value end)
              (%match-literal-token source index literal test)
            (when (and matched-p
-                      (or (= index 0)
+                      (or (zerop index)
                           (not (funcall identifier-char-predicate
                                         (char source (1- index)))))
                       (or (= end source-length)

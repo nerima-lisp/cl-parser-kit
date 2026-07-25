@@ -95,7 +95,7 @@ gets it for free rather than needing to remember it."
                (funcall on-limit-exceeded count))
              (funcall item-fn item)
           finally
-             (unless (null tail)
+             (when tail
                (funcall on-limit-exceeded (1+ limit))))))
 
 (defmacro %do-proper-list ((cursor thing) &body body)

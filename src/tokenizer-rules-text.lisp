@@ -14,7 +14,7 @@ CHAR unchanged when ESCAPE-MAP is NIL or has no entry for it."
         (cond
           ((and escape-char (char= char escape-char))
            (when (< (1+ scan) length)
-             (setf scan (1+ scan))))
+             (incf scan)))
           ((char= char delimiter)
            (return (1+ scan))))))))
 
@@ -31,7 +31,7 @@ CHAR unchanged when ESCAPE-MAP is NIL or has no entry for it."
             ;; replacement character; without one the escaped character is taken
             ;; literally (so \" yields ", \\ yields \).
             (write-char (%decode-escape-char (char source (1+ scan)) escape-map) buffer)
-            (setf scan (1+ scan)))
+            (incf scan))
           (write-char char buffer)))))
 
 (defun %match-delimited-token (source index delimiter escape-char &optional escape-map)
