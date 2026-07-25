@@ -8,7 +8,7 @@
       flake = false;
     };
     cl-prolog = {
-      url = "github:nerima-lisp/cl-prolog/v1.0.0";
+      url = "github:nerima-lisp/cl-prolog/v1.0.1";
       flake = false;
     };
     paredit-cli = {

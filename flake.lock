@@ -3,16 +3,16 @@
     "cl-prolog": {
       "flake": false,
       "locked": {
-        "lastModified": 1784992685,
-        "narHash": "sha256-TjUZF9vAl43rVM5n55l7/QCOGmnvlW/IHuDazTRTx84=",
+        "lastModified": 1785003722,
+        "narHash": "sha256-cL5wNd5TDZEIFxvhbBGTFYZOL+YB+boUBPK0yRV66r8=",
         "owner": "nerima-lisp",
         "repo": "cl-prolog",
-        "rev": "aa6966874e2525b0dd6ca84f2f54d8ac21812e86",
+        "rev": "a1352cee259b5476193255f21d8e56630f9893a9",
         "type": "github"
       },
       "original": {
         "owner": "nerima-lisp",
-        "ref": "v1.0.0",
+        "ref": "v1.0.1",
         "repo": "cl-prolog",
         "type": "github"
       }
