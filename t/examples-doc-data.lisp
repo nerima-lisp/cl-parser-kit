@@ -8,94 +8,42 @@ if?")
 
 (defparameter *document-required-snippets*
   '(("README.md"
-     "scripts/run-tests.lisp"
+     "run-tests.lisp"
+     "nix flake check"
+     "nix develop"
+     "docs/src/"
+     "nerima-lisp.github.io/cl-parser-kit")
+    ("docs/src/development.md"
+     "run-tests.lisp"
      "scripts/run-compile-check.lisp"
+     "scripts/run-coverage.lisp"
      "scripts/run-examples.lisp"
-     "scripts/run-release-audit.sh"
      "scripts/run-implementation-smoke.sh"
-     "SUPPORT.md"
-     "PARSING_PATTERNS.md"
-     "SECURITY.md"
-     "CONTRIBUTING.md"
-     "CODE_OF_CONDUCT.md"
-     "ships tagged releases starting with `v0.1.0`")
-    ("SECURITY.md"
-     "scripts/run-compile-check.lisp"
      "nix flake check"
-     "scripts/run-examples.lisp"
-     "./scripts/run-implementation-smoke.sh"
-     "SUPPORT.md"
-     "Common Lisp implementation and version"
-     "private reporting")
-    ("CONTRIBUTING.md"
-     "scripts/run-tests.lisp"
-     "scripts/run-compile-check.lisp"
-     "scripts/run-examples.lisp"
+     "nix run .#test"
+     "nix fmt"
+     "CL_PARSER_KIT_CL_WEAVE_ROOT"
+     "it-property")
+    ("docs/src/compatibility.md"
+     "290 symbols"
+     "t/api-surface-test.lisp"
+     "leading `%`"
+     "resource-limit defaults"
+     "style-warning")
+    ("docs/src/roadmap.md"
      "nix flake check"
-     "API.md"
-     "EXAMPLES.md"
-     "SUPPORT.md"
-     "SECURITY.md"
-     "CODE_OF_CONDUCT.md"
-     "GOVERNANCE.md"
-     "MAINTAINERS.md"
-     "Release Checklist"
-     "./scripts/run-release-audit.sh"
-     "example files still load and return the documented shape")
-    ("SUPPORT.md"
-     "scripts/run-compile-check.lisp"
-     "scripts/run-examples.lisp"
-     "sample files")
-    ("CODE_OF_CONDUCT.md"
-     "SECURITY.md"
-     "conduct concern"
-     "Repeated or severe violations"
-     "Direct, rigorous review")
-    ("GOVERNANCE.md"
-     "maintainer-led model"
-     "behavioral claims are expected to be backed by executable tests"
-     "keep the public surface small and intentional"
-     "does not currently use formal voting")
-    ("MAINTAINERS.md"
-     "README.md"
-     "API.md"
-     "nix flake check"
-     "sbcl --script scripts/run-tests.lisp"
-     "no guaranteed response-time SLA")
-    ("VERSIONING.md"
-     "publishes tagged releases starting with `v0.1.0`"
-     "consume a tagged release"
-     "semantic versioning")
-    ("RELEASING.md"
-     "ships tagged releases starting with `v0.1.0`"
-     "run `nix flake check`"
-     "run `./scripts/run-release-audit.sh`"
-     "run `sbcl --script scripts/run-compile-check.lisp`"
-     "nix develop --command sbcl --script scripts/run-tests.lisp"
-     "run `sbcl --script scripts/run-examples.lisp`"
-     "run `./scripts/run-implementation-smoke.sh`"
-     "CONTRIBUTING.md"
-     "CODE_OF_CONDUCT.md"
-     "SECURITY.md"
-     "README.md"
-     "CHANGELOG.md"
-     "ROADMAP.md")
-    ("ROADMAP.md"
-     "repository-level `nix flake check` CI"
      "coverage"
-     "portability-sensitive parser and"
-     "keep `CHANGELOG.md` current for every tagged release"
-     "public surface small and intentional")
-    ("API.md/recommended-entry-points"
+     "CHANGELOG.md")
+    ("docs/src/api-reference.md/recommended-entry-points"
      "## Recommended Entry Points"
      "## Quick Start Surface"
-     "PARSING_PATTERNS.md"
+     "parsing-patterns.md"
      "tokenize source with `make-tokenizer` and `tokenize-string`"
      "For comma-separated or bracketed forms, start with `sep-by`, `sep-by1`"
      "start with `chainl1` or `chainr1`; pair them with `operator-parser`"
      "use `make-ast-node` or `make-cst-node` to shape downstream data"
      "use `ast-node->sexp` or `cst-node->sexp`")
-    ("PARSING_PATTERNS.md"
+    ("docs/src/parsing-patterns.md"
      "## Start With The Smallest Stable Layer"
      "Prefer Sequence Helpers Over Manual Delimiter Loops"
      "Use `delimited-sep-by` or `delimited-sep-by1`"
@@ -104,7 +52,7 @@ if?")
      "alt` returns the farthest branch failure"
      "Move to Pratt parsing when you need:"
      "Replace hand-written delimiter plumbing with `preceded-by`")
-    ("API.md/canonical-entry-points"
+    ("docs/src/api-reference.md/canonical-entry-points"
      "## Parser Entry Points"
      "`parse-tokens`"
      "`parse-all`"
@@ -114,8 +62,30 @@ if?")
      "End-to-end entry points intentionally stay small"))
   "Per-document required-snippet fixture table for DOCUMENT-REQUIRED-SNIPPETS,
 kept apart from the lookup so the data itself -- what each doc must
-contain -- reads as a table, not a dispatch chain.")
+contain -- reads as a table, not a dispatch chain.
+
+Contribution, conduct, governance, support, security and maintainer policy are
+org-wide files served from nerima-lisp/.github, so this repository no longer
+ships copies of them and there is nothing here to assert about them.")
 
 (defun document-required-snippets (document)
   (or (cdr (assoc document *document-required-snippets* :test #'string=))
       (error "Unknown document snippet contract: ~S" document)))
+
+(defparameter *published-documents*
+  '("README.md"
+    "CHANGELOG.md"
+    "docs/src/index.md"
+    "docs/src/installation.md"
+    "docs/src/quick-start.md"
+    "docs/src/core-concepts.md"
+    "docs/src/parsing-patterns.md"
+    "docs/src/examples.md"
+    "docs/src/api-reference.md"
+    "docs/src/compatibility.md"
+    "docs/src/architecture.md"
+    "docs/src/development.md"
+    "docs/src/roadmap.md")
+  "Every Markdown document this repository publishes, in nav order. Excludes
+docs/src/changelog.md, whose entire body is a pymdownx.snippets include that
+only resolves when MkDocs runs.")

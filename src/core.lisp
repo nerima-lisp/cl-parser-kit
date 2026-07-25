@@ -13,7 +13,7 @@
 ;; file calls DEFINE-RESOURCE-LIMIT-CONDITION -- never at program-execution
 ;; time; SB-COVER's runtime instrumentation cannot observe that regardless of
 ;; how many callers exist. The same category as the macro-internal-control-flow
-;; pattern documented in CONTRIBUTING.md, just via a helper DEFUN rather than
+;; pattern documented in docs/src/development.md, just via a helper DEFUN rather than
 ;; inline LET/LOOP forms.
 (defun %resource-limit-reader-symbol (name slot)
   (intern (format nil "~A-~A" (string-upcase (symbol-name name)) (string-upcase (symbol-name slot)))

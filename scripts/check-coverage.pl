@@ -31,7 +31,7 @@ my $current_directory = '';
 # (plus helpers used solely by that macro) reads as permanently 0% covered no
 # matter how thoroughly the code it generates is tested elsewhere -- verified
 # for these files by reading their content and confirming every generated
-# function has dedicated call-site tests (see CONTRIBUTING.md, "Coverage
+# function has dedicated call-site tests (see docs/src/development.md, "Coverage
 # Expectations"). ADJUSTED-* below excludes exactly these files from the
 # denominator so the reported percentage reflects instrumentable code only;
 # the gate itself still runs against the raw, unadjusted totals.

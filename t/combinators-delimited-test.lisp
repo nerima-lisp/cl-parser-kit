@@ -78,7 +78,7 @@
         (expect (parse-failure-actual failure) :to-equal :eof)
         ;; PRECEDED-BY's prefix already consumed "let", so the failure must
         ;; stay committed -- otherwise a surrounding OPT/MANY/ALT silently
-        ;; backtracks past a half-consumed construct (PARSING_PATTERNS.md).
+        ;; backtracks past a half-consumed construct (docs/src/parsing-patterns.md).
         (expect (parse-failure-committed-p failure) :to-be-truthy)))))
 
 (it-sequential "combinator-terminated-by-test"
@@ -118,7 +118,7 @@
         (expect (parse-failure-expected failure) :to-equal :semicolon)
         (expect (parse-failure-actual failure) :to-equal :eof)
         ;; TERMINATED-BY's body already consumed "answer", so the failure
-        ;; must stay committed once the suffix fails (PARSING_PATTERNS.md).
+        ;; must stay committed once the suffix fails (docs/src/parsing-patterns.md).
         (expect (parse-failure-committed-p failure) :to-be-truthy)))))
 
 (it-sequential "combinator-terminated-by-committed-failure-is-not-swallowed-by-many-test"

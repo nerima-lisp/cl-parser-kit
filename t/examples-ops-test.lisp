@@ -40,43 +40,22 @@
 	     script
 	     '("driver_file=" "cat >\"$driver_file\"" "trap cleanup" "command_words"))))
 
-(it-sequential "release-audit-script-enforces-release-gate-contract-test"
-  (let ((script (repository-file-contents "scripts/run-release-audit.sh")))
-    (dolist (needle '("LICENSE"
-                      "README.md"
-                      "API.md"
-                      "EXAMPLES.md"
-                      "ARCHITECTURE.md"
-                      "PARSING_PATTERNS.md"
-                      "GOVERNANCE.md"
-                      "MAINTAINERS.md"
-                      "VERSIONING.md"
-                      "CONTRIBUTING.md"
-                      "CODE_OF_CONDUCT.md"
-                      "SUPPORT.md"
-                      "SECURITY.md"
-                      "RELEASING.md"
-                      "ROADMAP.md"
-                      "CHANGELOG.md"
-                      "run-tests.lisp"
-                      "scripts/run-implementation-smoke.sh"
-                      "README points contributors at the contributing guide"
-                      "CONTRIBUTING references security policy"
-                      "SUPPORT references the release policy"
-                      "RELEASING includes the security policy in the gate"
-                      "RELEASING includes the governance policy in the gate"
-                      "RELEASING includes the maintainer policy in the gate"
-                      "RELEASING includes the versioning policy in the gate"
-                      "GOVERNANCE requires executable evidence for behavioral claims"
-                      "MAINTAINERS preserves the raw-checkout verification baseline"
-                      "ROADMAP records the reproducible CI verification path"
-                      "run_with_timeout"
-                      "run_step_with_timeout"
-                      "timeout 300"
-                      "README quick-start API bullets mirror API.md"
-                      "sbcl --script"
-                      "PASS release readiness audit"))
-      (expect (search needle script) :to-be-truthy))))
+;;; scripts/run-release-audit.sh is gone, and with it the test that pinned its
+;;; contents. The audit existed to assert cross-references between root-level
+;;; policy documents (RELEASING -> SECURITY -> GOVERNANCE -> MAINTAINERS ...)
+;;; that nerima-lisp/.github now serves org-wide, and its remaining half --
+;;; "run the tests, the compile check and the examples" -- is what
+;;; `nix flake check` does with build caching and without a second copy of the
+;;; gate to keep in step. Its one non-duplicated assertion, that CHANGELOG.md
+;;; keeps an Unreleased section, moved to the check below.
+(it-sequential "changelog-follows-keep-a-changelog-format-test"
+  (let ((changelog (repository-file-contents "CHANGELOG.md")))
+    (expect (search "## [Unreleased]" changelog) :to-be-truthy)
+    (expect (search "## [1.0.0] - " changelog) :to-be-truthy)
+    ;; release.yml extracts the section matching the pushed tag as the release
+    ;; body, so an unbracketed heading makes the release step publish nothing.
+    (expect (search "
+## 1.0.0 - " changelog) :to-be-falsy)))
 
 (it-sequential "timeout-wrapper-kills-process-groups-and-validates-timeout-test"
   (let ((script (repository-file-contents "scripts/with-timeout.pl")))
