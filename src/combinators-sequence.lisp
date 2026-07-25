@@ -66,35 +66,49 @@ the CPS house style everywhere else in this file."
   (let ((parser-name (intern (symbol-name name) :keyword)))
     (ecase recursion-style
       (:left
+       ;; A plain LOOP rather than the self-recursive-through-closures CPS
+       ;; shape used elsewhere in this file, for the same reason as
+       ;; %COLLECT-MANY/CPS (combinators-sequence.lisp): this is a hot
+       ;; per-operator loop, and a closure per iteration is allocation it can
+       ;; avoid entirely. %RUN-PROGRESSING-PARSER/CPS's own "succeeded but did
+       ;; not progress" failure case is reproduced explicitly via
+       ;; %PROGRESS-FAILURE-OBJECT below, for both PARSER's initial call and
+       ;; every OPERATOR/PARSER pair inside the loop, since the loop no longer
+       ;; delegates to that shared function.
        `(defun ,name (parser operator)
           (make-parser
            :name ,parser-name
            :fn (lambda (input position)
-                 (labels ((continue-chain (accumulator current diagnostics)
-                            (%run-progressing-parser/cps
-                             operator input current
-                             (lambda (operator-value operator-next operator-result)
-                               (%run-progressing-parser/cps
-                                parser input operator-next
-                                (lambda (item-value item-next item-result)
-                                  (continue-chain
-                                   (funcall operator-value accumulator item-value)
-                                   item-next
-                                   (%merge-diagnostics diagnostics
-                                                       operator-result
-                                                       item-result)))
-                                (lambda (item-failure)
-                                  (%committed-failure-from item-failure))))
-                             (lambda (operator-failure)
-                               (%recoverable-success accumulator
-                                                     current
-                                                     diagnostics
-                                                     operator-failure)))))
-                   (%run-progressing-parser/cps
-                    parser input position
-                    (lambda (value next result)
-                      (continue-chain value next result))
-                    #'%failure-from))))))
+                 (multiple-value-bind (ok value next result)
+                     (%run-parser-on-token-vector parser input position)
+                   (if (or (not ok) (= next position))
+                       (%failure-from (if ok
+                                          (%progress-failure-object position parser)
+                                          result))
+                       (loop with accumulator = value
+                             with current = next
+                             with diagnostics = result
+                             do (multiple-value-bind (op-ok op-value op-next op-result)
+                                    (%run-parser-on-token-vector operator input current)
+                                  (when (or (not op-ok) (= op-next current))
+                                    (return (%recoverable-success
+                                             accumulator current diagnostics
+                                             (if op-ok
+                                                 (%progress-failure-object current operator)
+                                                 op-result))))
+                                  (multiple-value-bind (item-ok item-value item-next item-result)
+                                      (%run-parser-on-token-vector parser input op-next)
+                                    (cond
+                                      ((or (not item-ok) (= item-next op-next))
+                                       (return (%committed-failure-from
+                                                (if item-ok
+                                                    (%progress-failure-object op-next parser)
+                                                    item-result))))
+                                      (t
+                                       (setf accumulator (funcall op-value accumulator item-value)
+                                             diagnostics (%merge-diagnostics diagnostics
+                                                                             op-result item-result)
+                                             current item-next))))))))))))
       (:right
        `(defun ,name (parser operator)
           (make-parser
@@ -139,31 +153,36 @@ the CPS house style everywhere else in this file."
 
 (defun %collect-separated-items/cps (parser separator input current values diagnostics
                                     on-item-failure)
-  (%run-progressing-parser/cps
-   separator input current
-   (lambda (_separator-value separator-next separator-result)
-     (declare (ignore _separator-value))
-     (%run-progressing-parser/cps
-      parser input separator-next
-      (lambda (item-value item-next item-result)
-        (%collect-separated-items/cps parser separator input item-next
-                                      (cons item-value values)
-                                      (%merge-diagnostics diagnostics
-                                                          separator-result
-                                                          item-result)
-                                      on-item-failure))
-      (lambda (item-failure)
-        (funcall on-item-failure values
-                 current
-                 diagnostics
-                 separator-next
-                 separator-result
-                 item-failure))))
-   (lambda (separator-failure)
-     (%recoverable-success (nreverse values)
-                           current
-                           diagnostics
-                           separator-failure))))
+  "A plain LOOP rather than the self-recursive-through-closures CPS shape used
+elsewhere in this file, for the same reason as %COLLECT-MANY/CPS
+(combinators-sequence.lisp): this is a hot per-item loop, and a closure per
+iteration is allocation it can avoid entirely. %RUN-PROGRESSING-PARSER/CPS's
+own \"succeeded but did not progress\" failure case (both for SEPARATOR and
+for PARSER) is reproduced explicitly via %PROGRESS-FAILURE-OBJECT below,
+since the loop no longer delegates to that shared function."
+  (loop
+    (multiple-value-bind (separator-ok separator-value separator-next separator-result)
+        (%run-parser-on-token-vector separator input current)
+      (declare (ignore separator-value))
+      (when (or (not separator-ok) (= separator-next current))
+        (return (%recoverable-success
+                 (nreverse values) current diagnostics
+                 (if separator-ok
+                     (%progress-failure-object current separator)
+                     separator-result))))
+      (multiple-value-bind (item-ok item-value item-next item-result)
+          (%run-parser-on-token-vector parser input separator-next)
+        (cond
+          ((or (not item-ok) (= item-next separator-next))
+           (return (funcall on-item-failure values current diagnostics
+                            separator-next separator-result
+                            (if item-ok
+                                (%progress-failure-object separator-next parser)
+                                item-result))))
+          (t
+           (setf values (cons item-value values)
+                 diagnostics (%merge-diagnostics diagnostics separator-result item-result)
+                 current item-next)))))))
 
 (defun %make-separated-parser (name parser separator
                                &key allow-empty-p final-item-failure-recoverable-p)
