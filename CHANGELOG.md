@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+- fixed a global-name-collision hazard across `examples/`: `*tokenizer*` was independently
+  defined in `cst-example.lisp`, `diagnostic-example.lisp`, and `mini-language-parser.lisp`,
+  and `*table*` in `csv-parser-example.lisp` and `diagnostic-example.lisp` -- latent only
+  because `scripts/run-examples.lisp` and `t/examples-file-support.lisp` load every example
+  into one shared `cl-user` image and each check reloads its file immediately before calling,
+  but a REPL user following the trailer comments (e.g. `;; (parse-csv-example)`) after loading
+  two of these files would get silent breakage from the shared name. Every other example file
+  already used a file-specific prefix (`*combinator-tokenizer*`, `*csv-tokenizer*`, etc.); these
+  five were the outliers. Renamed to `*cst-tokenizer*`, `*diagnostic-tokenizer*`,
+  `*mini-language-tokenizer*`, `*csv-table*`, `*pratt-table*` via `paredit refactor
+  rename-symbols`, scoped per-file since each name denoted a different value
+- removed `%diagnostic-list` from `error-recovery-example.lisp`: its non-list branch was
+  unreachable (called only from the parser's own success path, where `many-till`'s diagnostics
+  value is always a list -- traced through `%merge-diagnostics`, always `(nreverse merged)`,
+  and `run-parser`, a pure pass-through of the parser's own return values) and its call site's
+  `:diagnostic-count` docstring/trailer-comment claim didn't mention the key even though every
+  call actually returns it; fixed both, and verified the corrected trailer comment's value
+  (`:diagnostic-count 1`) by actually running the function, not assuming it
+- found via a dedicated Explore-agent audit of `examples/` (dispatched in an earlier round,
+  returned this round); all fixes verified zero-test-impact (624/624, plus
+  `scripts/run-examples.lisp`'s 21/21 example checks) before and after
 - fixed another genuinely broken code example in `EXAMPLES.md`'s "Accept An Optional Trailing
   Separator" section (and its `docs/src/examples.md` mirror): the `delimited-sep-end-by` call's
   closing parens were one short, so the reader treated the following `(list ...)` body as a

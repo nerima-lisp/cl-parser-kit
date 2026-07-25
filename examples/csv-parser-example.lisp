@@ -28,13 +28,13 @@
 (defparameter *row*
   (cl-parser-kit:sep-by1 *field* (cl-parser-kit:type-token :comma)))
 
-(defparameter *table*
+(defparameter *csv-table*
   (cl-parser-kit:sep-end-by *row* (cl-parser-kit:type-token :newline)))
 
 (defun parse-csv (source)
   "Tokenize and parse SOURCE as CSV, returning the standard
 (values ok rows next failure) where ROWS is a list of lists of field strings."
-  (cl-parser-kit:parse-source *table* source *csv-tokenizer*))
+  (cl-parser-kit:parse-source *csv-table* source *csv-tokenizer*))
 
 (defun parse-csv-example ()
   "Parse a two-row CSV whose second row has a quoted field containing a comma."

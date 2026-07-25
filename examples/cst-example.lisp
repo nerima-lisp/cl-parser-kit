@@ -2,7 +2,7 @@
 
 ;; Tiny CST-oriented example.
 
-(defparameter *tokenizer*
+(defparameter *cst-tokenizer*
   (cl-parser-kit:make-tokenizer
    :rules (list (cl-parser-kit:make-whitespace-rule :skip-p t)
                 (cl-parser-kit:make-keyword-rule :let "let")
@@ -51,7 +51,7 @@
                                    :value (cl-parser-kit:token-text semicolon-token)
                                    :span (cl-parser-kit:token-span semicolon-token))))))))
 
-(defun parse-binding-cst (source &optional (tokenizer *tokenizer*))
+(defun parse-binding-cst (source &optional (tokenizer *cst-tokenizer*))
   (multiple-value-bind (ok value next failure)
       (cl-parser-kit:parse-source *binding-parser* source tokenizer)
     (if ok

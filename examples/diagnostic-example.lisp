@@ -3,13 +3,13 @@
 ;; Pratt parsing example that also exposes structured failure diagnostics.
 ;; Try: (parse-expression-source "1 + +")
 
-(defparameter *tokenizer*
+(defparameter *diagnostic-tokenizer*
   (cl-parser-kit:make-tokenizer
    :rules (list (cl-parser-kit:make-whitespace-rule :skip-p t)
                 (cl-parser-kit:make-literal-rule :plus "+")
                 (cl-parser-kit:make-number-rule))))
 
-(defparameter *table*
+(defparameter *pratt-table*
   (let ((table (cl-parser-kit:make-pratt-table)))
     (labels ((number-nud (token stream next current-table)
                (declare (ignore stream current-table))
@@ -21,7 +21,7 @@
       (cl-parser-kit:register-infix-operator table :plus 10 11 #'plus-led))
     table))
 
-(defun parse-expression-source (source &optional (tokenizer *tokenizer*) (table *table*))
+(defun parse-expression-source (source &optional (tokenizer *diagnostic-tokenizer*) (table *pratt-table*))
   (multiple-value-bind (ok value next failure)
       (cl-parser-kit:parse-pratt-source source tokenizer table)
     (if ok
