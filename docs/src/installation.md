@@ -40,12 +40,12 @@ If you keep personal projects in `~/common-lisp/`, one typical setup is:
 
 The repository ships tagged releases starting with `v0.1.0`. For production
 or team use, pin a tagged release (or a reviewed commit) and rerun the
-verification entry point from that checkout. See [Versioning Policy](versioning.md)
+verification entry point from that checkout. See [Versioning Policy](compatibility.md)
 for the release model.
 
 From `v1.0.0` on, the exported surface is frozen under semantic versioning: a
 breaking change to any exported symbol requires a major release. The
-[Versioning Policy](versioning.md) covers exactly what that includes and what
+[Versioning Policy](compatibility.md) covers exactly what that includes and what
 it deliberately does not.
 
 ## Test system

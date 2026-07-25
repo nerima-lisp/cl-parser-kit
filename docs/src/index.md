@@ -58,20 +58,20 @@ AST/CST helpers — deliberately compact rather than a compiler framework.
     The full exported surface grouped by concern, the layer model and
     dependency direction, and the remaining public-facing roadmap.
 
-    [:octicons-arrow-right-24: API Reference](api.md) ·
-    [Architecture](architecture.md) ·
-    [Roadmap](roadmap.md)
+    [:octicons-arrow-right-24: API Reference](api-reference.md) ·
+    [Compatibility](compatibility.md) ·
+    [Architecture](architecture.md)
 
--   :material-shield-check-outline:{ .lg .middle } &nbsp; **Governance & Support**
+-   :material-shield-check-outline:{ .lg .middle } &nbsp; **Project**
 
     ---
 
-    The maintainer-led decision process, the verified support boundary,
-    private security reporting, and the release gate every tag must pass.
+    The `nix flake check` gate and the raw-checkout entry points, the roadmap,
+    and the release history.
 
-    [:octicons-arrow-right-24: Support Policy](support.md) ·
-    [Security Policy](security.md) ·
-    [Governance](governance.md)
+    [:octicons-arrow-right-24: Development](development.md) ·
+    [Roadmap](roadmap.md) ·
+    [Changelog](changelog.md)
 
 </div>
 
@@ -114,11 +114,14 @@ layer model and [Roadmap](roadmap.md) for the remaining public-facing work.
   upgrade an existing hand-written parser.
 - [Examples](examples.md) — a map of every sample file under `examples/`
   and the recommended reading order.
-- [API Reference](api.md) — the exported surface grouped by concern, with
+- [API Reference](api-reference.md) — the exported surface grouped by concern, with
   the common entry point for each layer.
 - [Architecture](architecture.md) — the layer model and dependency
   direction.
 - [Roadmap](roadmap.md) — the near-term, mid-term, and explicit non-goals.
+- [Compatibility](compatibility.md) — what `v1.0.0` froze and what it did not.
+- [Development](development.md) — the `nix flake check` gate and the raw-checkout
+  entry points.
 
 ## Design Non-Goals
 
@@ -138,33 +141,40 @@ at the repository root packages `cl-parser-kit` as a Nix flake:
   S-expression lint checks.
 - `nix flake check` — the full reproducible CI gate: the library package
   build, the `cl-weave`/`cl-prolog` test suite, the 90%/80% coverage gate,
-  and `paredit-lint`, for `x86_64-linux`, `aarch64-linux`, and
-  `aarch64-darwin`.
+  `paredit-lint`, the `nixfmt` formatting gate, and the `--strict` docs
+  build, for `x86_64-linux`, `aarch64-linux`, and `aarch64-darwin`.
 - `nix build .#docs` — builds this documentation site with MkDocs (Material)
   in `--strict` mode, so broken links fail the build.
-- `nix fmt` — formats `flake.nix` with `nixfmt`.
+- `nix run .#test` — the test suite alone, against the working tree.
+- `nix fmt` — formats Nix sources with `nixfmt` via treefmt.
 
 Running `direnv allow` loads the devShell automatically.
 
 ## Support
 
-Use [Support Policy](support.md) for the canonical support boundary and
+Use [Support Policy](https://github.com/nerima-lisp/.github/blob/main/SUPPORT.md) for the canonical support boundary and
 release-readiness expectations.
 
 Use [private GitHub security advisories](https://github.com/nerima-lisp/cl-parser-kit/security/advisories/new)
-for vulnerability reporting — see [Security Policy](security.md). Do not put
+for vulnerability reporting — see [Security Policy](https://github.com/nerima-lisp/.github/blob/main/SECURITY.md). Do not put
 exploit details in a public issue.
 
 ## Project Operations
 
-- Contributing guide: [contributing.md](contributing.md)
-- Code of Conduct: [code-of-conduct.md](code-of-conduct.md)
-- Governance: [governance.md](governance.md)
-- Maintainers: [maintainers.md](maintainers.md)
-- Support policy: [support.md](support.md)
-- Security policy: [security.md](security.md)
-- Versioning policy: [versioning.md](versioning.md)
-- Release process: [releasing.md](releasing.md)
+The contribution, conduct, governance and support policies are org-wide and
+published from the [nerima-lisp/.github](https://github.com/nerima-lisp/.github)
+repository, so they are not duplicated here:
+
+- [Contributing](https://github.com/nerima-lisp/.github/blob/main/CONTRIBUTING.md)
+- [Code of Conduct](https://github.com/nerima-lisp/.github/blob/main/CODE_OF_CONDUCT.md)
+- [Governance](https://github.com/nerima-lisp/.github/blob/main/GOVERNANCE.md)
+- [Support](https://github.com/nerima-lisp/.github/blob/main/SUPPORT.md)
+- [Security](https://github.com/nerima-lisp/.github/blob/main/SECURITY.md)
+
+Repository-specific:
+
+- [Compatibility](compatibility.md) — what the public surface promises.
+- [Development](development.md) — the gate, the entry points, releasing.
 - Pull request queue: <https://github.com/nerima-lisp/cl-parser-kit/pulls>
 - Issue tracker: <https://github.com/nerima-lisp/cl-parser-kit/issues>
 - Release notes: <https://github.com/nerima-lisp/cl-parser-kit/releases>

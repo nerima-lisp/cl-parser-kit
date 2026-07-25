@@ -41,5 +41,5 @@ packages for every concept.
 ## Public Shape
 
 The repository intentionally exports one package, `:cl-parser-kit`, so the
-common path stays simple for consumers. See [API Reference](api.md) for
+common path stays simple for consumers. See [API Reference](api-reference.md) for
 the full exported surface grouped by concern.

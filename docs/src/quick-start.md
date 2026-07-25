@@ -422,4 +422,4 @@ public API also supports notes and fix-its:
   stable layer for your grammar and shape committed failures deliberately.
 - [Examples](examples.md) for a guided tour through every sample file under
   `examples/`, in recommended reading order.
-- [API Reference](api.md) for the exported surface grouped by concern.
+- [API Reference](api-reference.md) for the exported surface grouped by concern.
