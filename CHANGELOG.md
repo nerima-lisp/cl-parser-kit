@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- pinned the `paredit-cli` flake input to `v0.8.0` (`flake.nix` previously floated its
+  default branch with no version pin, unlike `cl-weave`/`cl-prolog`'s explicit tag pins) --
+  the locked commit was 17 commits behind the current release, missing the entire `inspect
+  lint`/`complexity`/`naming`/`reachability` command set, 5 new `edit` commands, and 4 new
+  dialects; the reproducible `nix develop`/`paredit-lint` environment would not have had any
+  of this tooling despite it being used extensively this session. Regenerated `flake.lock`
 - fixed a genuinely broken code example in `EXAMPLES.md`'s "Render A Parse Failure" section
   (and its `docs/src/examples.md` mirror): the infix `led` callback was missing its `next`
   parameter (4 params instead of the required 5, `(left op right next current-table)`) and

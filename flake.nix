@@ -12,7 +12,7 @@
       flake = false;
     };
     paredit-cli = {
-      url = "github:nerima-lisp/paredit-cli";
+      url = "github:nerima-lisp/paredit-cli/v0.8.0";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
