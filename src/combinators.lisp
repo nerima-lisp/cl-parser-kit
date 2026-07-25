@@ -97,6 +97,18 @@ which *MAXIMUM-*-RECURSION-DEPTH* special they report."
 (defun %merge-diagnostics (&rest diagnostics-lists)
   ;; Avoid APPLY/APPEND over an attacker-influenced number of diagnostic groups;
   ;; accumulate explicitly so merging stays linear in emitted diagnostics.
+  ;;
+  ;; DIAGNOSTICS-LISTS itself never escapes this function -- it is only ever
+  ;; walked by the DOLIST below, and %ENSURE-PARSE-FAILURE-LIST-COUNT is
+  ;; handed each individual element list, never the REST list itself -- so
+  ;; DYNAMIC-EXTENT is safe here, unlike a closure that might be stored or
+  ;; returned. Verified empirically (a controlled before/after byte-consed
+  ;; measurement): a 2-argument call here otherwise heap-allocates a fresh
+  ;; 2-cons list on every single call, EVEN WHEN both arguments are NIL --
+  ;; and this function runs on every combinator step across the whole library
+  ;; (SEQ, ALT, MANY, SEP-BY, and everything else that calls it), making it
+  ;; the single most-executed allocation site in the codebase.
+  (declare (dynamic-extent diagnostics-lists))
   (let ((merged nil)
         (count 0))
     (dolist (diagnostics diagnostics-lists (nreverse merged))
