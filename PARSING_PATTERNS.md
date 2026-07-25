@@ -61,6 +61,17 @@ Use the strict `sep-by` family when a trailing separator would be a grammar
 bug. Use the `sep-end-by` family when a trailing separator is part of the
 language contract.
 
+Reach for the bounded variants when the grammar itself caps repetition
+instead of the item parser failing naturally:
+
+- `sep-by-between` when the grammar states both a minimum and a maximum item
+  count.
+- `sep-by-at-least` for an open-ended minimum with no cap.
+- `sep-by-at-most` for a capped count with no required minimum.
+
+All three still enforce the same committed-item rule as `sep-by`: once a
+separator matches, the following item is mandatory.
+
 ## Project Payloads Early When Syntax Tokens Are Noise
 
 If downstream code should not care about raw token objects, project token text
@@ -126,6 +137,35 @@ Move to Pratt parsing when you need:
 
 Pratt parsing is not a general replacement for the rest of the library. It is
 the focused tool for expression-heavy regions of a grammar.
+
+## Memoize Only The Rules That Need It
+
+`memoize` is plain packrat memoization: it trades memory for skipping repeat
+parses of the same rule at the same position, which only pays off for rules a
+grammar revisits through backtracking (e.g. shared sub-expressions reachable
+from more than one alternative). Wrap the whole parse in
+`with-parse-memoization` once at the entry point; memoizing a rule that is
+never reparsed just adds bookkeeping overhead for no benefit.
+
+`memoize` does not implement left recursion. A memoized rule that recurses
+into itself at the same position without consuming input signals
+`left-recursion-detected` (read the offending parser and position via
+`left-recursion-detected-parser` / `left-recursion-detected-position`) instead
+of looping forever. Treat that condition as a grammar bug to fix, not an error
+to catch: rewrite the recursive rule iteratively (the same technique
+`chainl1` uses to express left-associative operator chains without recursion).
+
+## Debug A Parser Before Reaching For Print Statements
+
+Wrap any parser in `trace-parser` to log its outcome (success/failure,
+position, consumed input) to `*trace-output*` on every call, without changing
+the parser's own behavior. It is a pass-through combinator (megaparsec's
+`dbg`), so it composes with any other combinator. Wrap the one sub-parser
+under suspicion, not the whole grammar -- every traced call pays for the
+format call, so tracing should stay as narrow as the investigation allows.
+Prefer it over ad hoc `format` calls inside a callback: it stays outside the
+parser's own logic and is easy to remove by deleting the wrapper, not by
+hunting down inserted print statements.
 
 ## Upgrade Existing Parsers By Replacing Boilerplate First
 

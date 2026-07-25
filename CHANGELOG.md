@@ -10,6 +10,11 @@
   dense boundary-comparison predicate, `%fix-it-region-conflicts-p`
   (previously only `%merge-parse-failure-pair` was mutation-tested);
   confirms every mutant of its 4-comparison or/and overlap guard is killed
+- documented `sep-by-between`/`sep-by-at-least`/`sep-by-at-most`,
+  `memoize`/`left-recursion-detected`, and `trace-parser` in
+  `PARSING_PATTERNS.md` (the "recommended patterns" guide) -- present in
+  `API.md`'s reference since they were added, but absent from the patterns
+  guide entirely until now
 
 ## 0.4.0 - 2026-07-25
 
