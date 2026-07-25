@@ -2,7 +2,7 @@
 
 ;; Tiny statement parser example.
 
-(defparameter *tokenizer*
+(defparameter *mini-language-tokenizer*
   (cl-parser-kit:make-tokenizer
    :rules (list (cl-parser-kit:make-whitespace-rule :skip-p t)
                 (cl-parser-kit:make-keyword-rule :let "let")
@@ -22,6 +22,6 @@
 
 ;; Evaluate this form in the REPL for an end-to-end parse.
 (defun parse-let-statement-example (&optional (source "let answer = 42;"))
-  (cl-parser-kit:parse-source *statement-parser* source *tokenizer*))
+  (cl-parser-kit:parse-source *statement-parser* source *mini-language-tokenizer*))
 
 ;; (parse-let-statement-example)

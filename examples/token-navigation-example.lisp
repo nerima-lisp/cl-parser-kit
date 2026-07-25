@@ -11,19 +11,18 @@
                                                    :text "42"
                                                    :value 42)))
          (parser
-           (cl-parser-kit:map-parser
-            (cl-parser-kit:seq
-             (cl-parser-kit:satisfies-token
-              (lambda (token)
-                (and (eql (cl-parser-kit:token-type token) :identifier)
-                     (> (length (cl-parser-kit:token-text token)) 3)))
-              :expected-name :long-identifier)
-             (cl-parser-kit:type-token :equals)
-             (cl-parser-kit:type-token-value :number)
-             (cl-parser-kit:end-of-input))
-            (lambda (parts)
-              (list (cl-parser-kit:token-text (first parts))
-                    (third parts))))))
+           (cl-parser-kit:seq-map
+            (lambda (identifier-token equals-token number-value end-of-input)
+              (declare (ignore equals-token end-of-input))
+              (list (cl-parser-kit:token-text identifier-token) number-value))
+            (cl-parser-kit:satisfies-token
+             (lambda (token)
+               (and (eql (cl-parser-kit:token-type token) :identifier)
+                    (> (length (cl-parser-kit:token-text token)) 3)))
+             :expected-name :long-identifier)
+            (cl-parser-kit:type-token :equals)
+            (cl-parser-kit:type-token-value :number)
+            (cl-parser-kit:end-of-input))))
     (labels ((parse-summary ()
                (multiple-value-bind (ok value next failure)
                    (cl-parser-kit:parse-all parser tokens)

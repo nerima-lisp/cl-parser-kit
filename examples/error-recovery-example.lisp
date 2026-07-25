@@ -41,13 +41,11 @@
   (cl-parser-kit:many-till (cl-parser-kit:recover *statement* *recovery*)
                            (cl-parser-kit:end-of-input)))
 
-(defun %diagnostic-list (diagnostics)
-  (if (listp diagnostics) diagnostics (list diagnostics)))
-
 (defun parse-program-with-recovery (source)
   "Parse SOURCE, recovering past malformed statements. Returns
-(values ok (:results <list> :error-count N) next diagnostics), reading the
-recovery diagnostics from RUN-PARSER's fourth value."
+(values ok (:results <list> :error-count N :diagnostic-count N) next
+diagnostics), reading the recovery diagnostics from RUN-PARSER's fourth
+value."
   (let ((tokens (cl-parser-kit:tokenize source *recovery-tokenizer*)))
     (multiple-value-bind (ok value next diagnostics)
         (cl-parser-kit:run-parser *program* tokens 0)
@@ -58,7 +56,7 @@ recovery diagnostics from RUN-PARSER's fourth value."
                         ;; :error marker); the recovery notes are also available
                         ;; in DIAGNOSTICS (RUN-PARSER's fourth value)
                         :error-count (count :error value)
-                        :diagnostic-count (length (%diagnostic-list diagnostics)))
+                        :diagnostic-count (length diagnostics))
                   next
                   diagnostics)
           (values nil nil next diagnostics)))))
@@ -69,4 +67,5 @@ parse recovers and reports all three results plus the collected error."
   (parse-program-with-recovery "a = 1 ; b = ; c = 3 ;"))
 
 ;; (parse-error-recovery-example)
-;; => T, (:results ((:stmt "a" 1) :error (:stmt "c" 3)) :error-count 1), 11, (...)
+;; => T, (:results ((:stmt "a" 1) :error (:stmt "c" 3)) :error-count 1
+;;         :diagnostic-count 1), 11, (...)

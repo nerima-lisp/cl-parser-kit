@@ -269,21 +269,16 @@ if?"
            (cl-parser-kit:literal ")" :type :rparen))
           (cl-parser-kit:literal ";" :type :semicolon)))
      (binding-parser
-       (cl-parser-kit:map-parser
-        (cl-parser-kit:seq
-         (cl-parser-kit:type-token-text :identifier)
-         (cl-parser-kit:literal-value "=" :type :equals)
+       (cl-parser-kit:seq-map
+        (lambda (identifier operator value end-of-input)
+          (declare (ignore end-of-input))
+          (list identifier operator value))
+        (cl-parser-kit:type-token-text :identifier)
+        (cl-parser-kit:literal-value "=" :type :equals)
         (cl-parser-kit:terminated-by
          (cl-parser-kit:type-token-value :number)
          (cl-parser-kit:literal-text ";" :type :semicolon))
-        (cl-parser-kit:end-of-input))
-        (lambda (parts)
-          (let ((identifier (first parts))
-                (operator (second parts))
-                (value (third parts))
-                (end-of-input (fourth parts)))
-            (declare (ignore end-of-input))
-            (list identifier operator value))))))
+        (cl-parser-kit:end-of-input))))
   (list (cl-parser-kit:parse-source group-parser "(answer, result);" tokenizer)
         (cl-parser-kit:parse-tokens
          binding-parser
@@ -311,7 +306,7 @@ if?"
           (cl-parser-kit:literal "(" :type :lparen)
           (cl-parser-kit:type-token-text :identifier)
           (cl-parser-kit:literal "," :type :comma)
-          (cl-parser-kit:literal ")" :type :rparen)))
+          (cl-parser-kit:literal ")" :type :rparen))))
   (list (cl-parser-kit:parse-source parser "(answer, result)" tokenizer)
         (cl-parser-kit:parse-source parser "(answer, result,)" tokenizer)))
 ```

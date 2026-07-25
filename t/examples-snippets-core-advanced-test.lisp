@@ -54,19 +54,18 @@
                          (make-token :type :equals :text "=")
                          (make-token :type :number :text "42" :value 42)))
          (parser
-           (map-parser
-            (seq
-             (satisfies-token
-              (lambda (token)
-                (and (eql (token-type token) :identifier)
-                     (> (length (token-text token)) 3)))
-              :expected-name :long-identifier)
-             (type-token :equals)
-             (type-token-value :number)
-             (end-of-input))
-            (lambda (parts)
-              (list (token-text (first parts))
-                    (third parts))))))
+           (seq-map
+            (lambda (identifier-token equals-token number-value end-of-input)
+              (declare (ignore equals-token end-of-input))
+              (list (token-text identifier-token) number-value))
+            (satisfies-token
+             (lambda (token)
+               (and (eql (token-type token) :identifier)
+                    (> (length (token-text token)) 3)))
+             :expected-name :long-identifier)
+            (type-token :equals)
+            (type-token-value :number)
+            (end-of-input))))
     (multiple-value-bind (first next)
         (next-token tokens 0)
       (expect (token-text (peek-token tokens 0)) :to-equal "answer")

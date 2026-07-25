@@ -19,6 +19,6 @@ semantic versioning.
   migration notes
 
 `0.x` releases may still make breaking changes in a minor bump while the
-public contract stabilizes; see the
-[release notes](https://github.com/nerima-lisp/cl-parser-kit/releases)
+public contract stabilizes; see
+[`CHANGELOG.md`](https://github.com/nerima-lisp/cl-parser-kit/blob/main/CHANGELOG.md)
 for what changed in each release.

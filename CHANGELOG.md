@@ -2,6 +2,63 @@
 
 ## Unreleased
 
+- converted 4 duplicated `map-parser` + `seq` + manual `first`/`second`/`third`/`fourth`
+  destructuring sites to `seq-map` with named lambda parameters, matching the idiom
+  `json-parser-example.lisp` already used: `examples/sequence-helper-example.lisp`'s
+  `parse-binding-fields-example`, its exact duplicate in `t/examples-file-support.lisp`'s
+  `with-punctuated-example-parsers` macro, and `EXAMPLES.md`'s "Project Token Text And Values"
+  snippet (+ its `docs/src/examples.md` mirror); separately, `examples/token-navigation-example
+  .lisp`'s `inspect-token-navigation-example` and its duplicate in
+  `t/examples-snippets-core-advanced-test.lisp`. Each of the 4 examples/`json-parser-example`
+  duplication sites was verified output-identical before/after by actually running it (not just
+  diffing the rewrite), and the `EXAMPLES.md` snippet was verified by extracting and evaling its
+  exact literal text (not a hand-typed reconstruction, per the lesson from the second
+  `EXAMPLES.md` bug found earlier this session)
+- fixed a global-name-collision hazard across `examples/`: `*tokenizer*` was independently
+  defined in `cst-example.lisp`, `diagnostic-example.lisp`, and `mini-language-parser.lisp`,
+  and `*table*` in `csv-parser-example.lisp` and `diagnostic-example.lisp` -- latent only
+  because `scripts/run-examples.lisp` and `t/examples-file-support.lisp` load every example
+  into one shared `cl-user` image and each check reloads its file immediately before calling,
+  but a REPL user following the trailer comments (e.g. `;; (parse-csv-example)`) after loading
+  two of these files would get silent breakage from the shared name. Every other example file
+  already used a file-specific prefix (`*combinator-tokenizer*`, `*csv-tokenizer*`, etc.); these
+  five were the outliers. Renamed to `*cst-tokenizer*`, `*diagnostic-tokenizer*`,
+  `*mini-language-tokenizer*`, `*csv-table*`, `*pratt-table*` via `paredit refactor
+  rename-symbols`, scoped per-file since each name denoted a different value
+- removed `%diagnostic-list` from `error-recovery-example.lisp`: its non-list branch was
+  unreachable (called only from the parser's own success path, where `many-till`'s diagnostics
+  value is always a list -- traced through `%merge-diagnostics`, always `(nreverse merged)`,
+  and `run-parser`, a pure pass-through of the parser's own return values) and its call site's
+  `:diagnostic-count` docstring/trailer-comment claim didn't mention the key even though every
+  call actually returns it; fixed both, and verified the corrected trailer comment's value
+  (`:diagnostic-count 1`) by actually running the function, not assuming it
+- found via a dedicated Explore-agent audit of `examples/` (dispatched in an earlier round,
+  returned this round); all fixes verified zero-test-impact (624/624, plus
+  `scripts/run-examples.lisp`'s 21/21 example checks) before and after
+- fixed another genuinely broken code example in `EXAMPLES.md`'s "Accept An Optional Trailing
+  Separator" section (and its `docs/src/examples.md` mirror): the `delimited-sep-end-by` call's
+  closing parens were one short, so the reader treated the following `(list ...)` body as a
+  third, malformed `let*` binding and never closed the form, raising `END-OF-FILE` when the
+  snippet was actually run. Found and confirmed via a dedicated re-execution audit of every
+  ```lisp block in the repository's docs (not just the previously-fixed Pratt callback example)
+- fixed `API.md`'s "Quick Start Surface" section describing itself as something `README.md`
+  "should mirror" (prescriptive) when it already does mirror it exactly; reworded to match
+  `docs/src/api.md`'s already-accurate present-tense phrasing
+- backported the test-package name (`:cl-parser-kit/test`) and the `scripts/run-tests.lisp`
+  reproducible invocation from `README.md`'s Testing section into `docs/src/installation.md`,
+  which was missing both
+- fixed `docs/src/versioning.md` pointing readers to GitHub's Releases page for "what changed in
+  each release" instead of `CHANGELOG.md` like the root `VERSIONING.md` does; the Releases page is
+  incomplete (only `v0.1.0`/`v0.2.0` have Release objects, later tags are tag-only), so the mirror
+  was sending readers to a source that cannot actually answer the question it claimed to answer
+- raised `ci.yml`'s `nix flake check` timeout (660s -> 2200s inner, 12 -> 40 step
+  `timeout-minutes`, 20 -> 45 job `timeout-minutes`) after confirming via the actual failed
+  CI run for the `paredit-cli` v0.8.0 bump that it timed out mid-build: paredit-cli's 114
+  dependency crates had just finished compiling but its own (much larger, post-v0.8.0) binary
+  crate hadn't started -- Cachix never got a completed build to cache, so every subsequent run
+  would have hit the identical timeout in a permanent loop. A real, self-inflicted regression
+  from bumping the stale pin fixed earlier this same round; caught by checking the live CI run
+  result rather than assuming the fix was clean
 - fixed two broken GitHub Actions pins in `.github/workflows/ci.yml` (the primary CI gate):
   `cachix/install-nix-action` and `cachix/cachix-action` were pinned to commit SHAs that no
   longer exist in either action's repository (confirmed via each repo's git commit-object API

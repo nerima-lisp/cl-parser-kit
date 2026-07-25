@@ -131,5 +131,13 @@ REPL entry point is:
 (asdf:test-system :cl-parser-kit)
 ```
 
+The ASDF test system is `cl-parser-kit-test`, and the test package remains
+`:cl-parser-kit/test`. If you are verifying from a raw checkout outside
+`local-projects`, one reproducible SBCL command is:
+
+```sh
+sbcl --script scripts/run-tests.lisp
+```
+
 Continue with [Quick Start](quick-start.md) for the first runnable
 tokenizer and parser snippets.
