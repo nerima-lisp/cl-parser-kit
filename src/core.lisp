@@ -1,5 +1,13 @@
 (in-package :cl-parser-kit)
 
+;; SBCL's default policy balances speed/safety/space/debug; this library's
+;; combinators/tokenizer run in tight per-token, per-parser-step loops where
+;; that balance costs real throughput. SAFETY stays at 1 (not 0) deliberately
+;; -- this codebase's resource-limit guards throughout (tokenizer/parser/
+;; diagnostics) depend on type and bounds checks still signalling cleanly on
+;; malformed or hostile input rather than being compiled away.
+(declaim (optimize (speed 3) (safety 1)))
+
 ;; Called only from DEFINE-RESOURCE-LIMIT-CONDITION's own macro body (below),
 ;; so every invocation happens at macroexpansion time -- compiling whichever
 ;; file calls DEFINE-RESOURCE-LIMIT-CONDITION -- never at program-execution
