@@ -14,7 +14,9 @@
   `memoize`/`left-recursion-detected`, and `trace-parser` in
   `PARSING_PATTERNS.md` (the "recommended patterns" guide) -- present in
   `API.md`'s reference since they were added, but absent from the patterns
-  guide entirely until now
+  guide entirely until now; mirrored the same additions into
+  `docs/src/parsing-patterns.md` (the published MkDocs site's copy, manually
+  kept in sync with the root guide)
 
 ## 0.4.0 - 2026-07-25
 
