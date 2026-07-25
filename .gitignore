@@ -1,19 +1,67 @@
+# --- Common Lisp build output ---
 *.fasl
-/cl-parser-kit.coverage
-/cl-parser-kit-coverage-report/
-/.cl-parser-kit/
+*.fas
+*.lib
+*.dfsl
+*.ufsl
+*.fsl
+
+# --- Nix ---
+/result
+/result-*
+/.direnv/
+
+# --- Test and coverage output ---
+/coverage/
+/coverage-report/
+/*-coverage-report/
+*.coverage
+coverage.dat
+/__snapshots__/
+/*-snapshots/
+
+# --- Local caches and scratch space ---
+/.cache/
+/.deps/
+/tmp/
+/.worktrees/
+/.paredit.cleanup/
+
+# --- Credentials ---
+# Not because anyone plans to put a key here, but because the cost of the one
+# time it happens by accident is a rotation across the whole org. See
+# SUPPLY_CHAIN.md for what to do if one is committed anyway.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+/secrets/
+
+# --- Editor and OS noise ---
+.DS_Store
+*~
+\#*\#
+.\#*
+
+# --- Repository-specific entries below this line ---
+
+# Editor / agent state that is checked out but never committed here.
 /.claude/
 /.serena/
+/.agent-scratch/
+
+# paredit-cli scratch files (see the paredit-lint check in flake.nix).
 *.paredit-tmp-*
+
+# Test-run scratch written by the tokenizer suite.
 /t/.tokenizer-test-forms.lisp
 /t/.tokenizer-test-partial.lisp
 
-.worktrees/
-.agent-scratch/
+# Interpreter/tooling cache specific to this package.
+/.cl-parser-kit/
 
-# MkDocs local build output (docs/mkdocs.yml sets site_dir: ../site)
+# MkDocs local build output (docs/mkdocs.yml sets site_dir: ../site).
 /site/
-
-# nix build output symlinks (`nix build .#docs` leaves ./result behind)
-/result
-/result-*
