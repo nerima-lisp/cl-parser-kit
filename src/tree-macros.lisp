@@ -65,6 +65,13 @@ that fill in the generated docstrings and defaults."
          (upper-name (string-upcase (symbol-name name))))
     `(progn
        (defstruct (,name (:constructor ,constructor (&key type value children span data)))
+         ,(format nil "One node of the ~A this library builds from parsed input: ~
+a TYPE naming what it is, an optional leaf VALUE, a list of CHILDREN, the SPAN ~
+it covers in the source, and DATA for caller-specific payload the library ~
+never interprets.~2%Nothing distinguishes a leaf from an interior node ~
+structurally -- a leaf is simply a node with no CHILDREN -- so every ~A helper ~
+works uniformly at any depth. Build one with ~A, TOKEN->~A, or SEXP->~A."
+                  kind-noun upper-name constructor upper-name upper-name)
          type
          value
          children
@@ -72,6 +79,13 @@ that fill in the generated docstrings and defaults."
          data)
 
        (defun ,sexp-name (node &key include-span include-data)
+         ,(format nil "Convert NODE and its descendants into a nested plist ~
+s-expression: (:TYPE type :VALUE value :CHILDREN (...)), with :SPAN and :DATA ~
+included only when INCLUDE-SPAN or INCLUDE-DATA is true.~2%The stable, ~
+printable, EQUAL-comparable form of ~A ~A -- what tests, examples, and REPL ~
+inspection compare against, since two structurally identical structs are not ~
+EQUAL. SEXP->~A is the inverse."
+                  article upper-name upper-name)
          (%tree-node->sexp node
                            #',type-accessor #',value-accessor #',children-accessor
                            #',span-accessor #',data-accessor

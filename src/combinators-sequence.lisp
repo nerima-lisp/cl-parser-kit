@@ -47,15 +47,39 @@ the CPS house style everywhere else in this file."
 ;;; these two macro bodies showing as uncovered is a reporting artifact.
 
 (defmacro define-separated-parser (name &rest options)
-  (let ((parser-name (intern (symbol-name name) :keyword)))
+  "Define NAME as %MAKE-SEPARATED-PARSER with OPTIONS fixed.
+
+The four SEP-BY variants differ only in two answers -- whether an empty list
+counts as a match, and whether a trailing separator with nothing after it does
+-- so each is one call with those answers filled in."
+  (let ((parser-name (intern (symbol-name name) :keyword))
+        (allow-empty-p (getf options :allow-empty-p))
+        (allow-trailing-p (getf options :final-item-failure-recoverable-p)))
     `(defun ,name (parser separator)
+       ,(format nil "Parse ~:[one or more~;zero or more~] PARSER items separated ~
+by SEPARATOR, returning the list of results.~2%A SEPARATOR with no item after ~
+it ~:[fails, and does so committed: having matched a separator, the grammar ~
+was owed an item~;is accepted and consumed, for a grammar that permits a ~
+trailing separator~]. Item count is bounded by ~
+*MAXIMUM-PARSER-REPETITION-COUNT*."
+                allow-empty-p allow-trailing-p)
        (%make-separated-parser ,parser-name parser separator
                                ,@options))))
 
 (define-parser-function many (parser) :many
+  "Apply PARSER repeatedly until it fails, returning the list of its results --
+possibly empty, since zero matches is a success.
+
+A PARSER that can succeed without consuming input would loop forever, so that
+case is detected and reported as a failure rather than hanging. The repetition
+count is bounded by *MAXIMUM-PARSER-REPETITION-COUNT*. MANY1 is the
+at-least-one form."
   (%collect-many/cps parser input position '() '()))
 
 (defun many1 (parser)
+  "Apply PARSER repeatedly, requiring at least one match, and return the list of
+results. MANY but failing on zero matches -- the right choice whenever an empty
+result would be accepted downstream as a valid but meaningless parse."
   (bind-parser parser
                (lambda (first)
                  (map-parser (many parser)
@@ -76,6 +100,12 @@ the CPS house style everywhere else in this file."
        ;; every OPERATOR/PARSER pair inside the loop, since the loop no longer
        ;; delegates to that shared function.
        `(defun ,name (parser operator)
+          ,(format nil "Parse one or more PARSER operands separated by OPERATOR, ~
+whose value must be a two-argument function, and fold them left-associatively: ~
+a - b - c parses as (a - b) - c.~2%OPERATOR-PARSER is the usual way to make an ~
+operator token yield the function to apply. CHAINL is the variant defaulting ~
+instead of failing on zero operands, and the Pratt layer is the better tool ~
+once more than two precedence levels are involved.")
           (make-parser
            :name ,parser-name
            :fn (lambda (input position)
@@ -111,6 +141,12 @@ the CPS house style everywhere else in this file."
                                              current item-next))))))))))))
       (:right
        `(defun ,name (parser operator)
+          ,(format nil "Parse one or more PARSER operands separated by OPERATOR, ~
+whose value must be a two-argument function, and fold them ~
+right-associatively: a ^ b ^ c parses as a ^ (b ^ c).~2%The mirror of CHAINL1, ~
+for exponentiation, assignment, and cons-like operators. Its right recursion ~
+is bounded by *MAXIMUM-PARSER-RECURSION-DEPTH*. CHAINR is the variant ~
+defaulting instead of failing on zero operands.")
           (make-parser
            :name ,parser-name
            :fn (lambda (input position)
@@ -318,4 +354,8 @@ the list of results. Equivalent to (SEP-BY-BETWEEN 0 MAX PARSER SEPARATOR)."
   (sep-by-between 0 max parser separator))
 
 (define-parser-function opt (parser) :opt
+  "Run PARSER, returning NIL and consuming nothing when it fails recoverably --
+the optional element. A committed failure still propagates, so OPT skips a
+construct that never started, not one that started and then went wrong. Use
+OPTION when NIL is itself a possible parsed value."
   (%run-parser-or-recoverable parser input position nil))

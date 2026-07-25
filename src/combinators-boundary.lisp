@@ -15,10 +15,25 @@
                                value)))))
 
 (defmacro define-delimited-separated-parser (name separator-parser)
+  "Define NAME as SEPARATOR-PARSER wrapped in BETWEEN -- the bracketed form of a
+separated list, which is what an argument list or an array literal actually is."
   `(defun ,name (open parser separator close)
+     ,(format nil "Parse OPEN, then PARSER repeated as ~A does with SEPARATOR ~
+between items, then CLOSE, returning the list of PARSER's results. ~
+(BETWEEN OPEN (~A PARSER SEPARATOR) CLOSE), inheriting that combinator's ~
+commitment and failure-position behavior exactly."
+              separator-parser separator-parser)
      (between open (,separator-parser parser separator) close)))
 
 (define-parser-function label (parser expected) expected
+  "Run PARSER unchanged, but rewrite a failure's EXPECTED to EXPECTED.
+
+This is how an internal grammar detail is replaced by the name a user
+recognizes: a failing digit-then-dot-then-digit sequence reports \"expected
+NUMBER\" rather than the innermost token it happened to stop on. Only the
+expected form changes -- position, actual token, diagnostics, and commitment
+all pass through. Use CONTEXT instead when the internal detail should be kept
+and merely annotated."
   (%run-parser/if-success
    parser input position
    (lambda (value next result)
@@ -103,12 +118,25 @@ enclosing OPT/ALT may still recover. FParsec's `notEmpty`."
          (%success value next result)))))
 
 (defun preceded-by (prefix parser)
+  "Parse PREFIX then PARSER, returning only PARSER's value and discarding
+PREFIX's. The value-projection wrapper for a leading delimiter or keyword;
+failure positions and commitment behave exactly as the underlying sequence."
   (%keep-right prefix parser))
 
 (defun terminated-by (parser suffix)
+  "Parse PARSER then SUFFIX, returning only PARSER's value and discarding
+SUFFIX's -- the mirror of PRECEDED-BY, for a trailing delimiter such as a
+statement semicolon."
   (%keep-left parser suffix))
 
 (define-parser-function lookahead (parser) :lookahead
+  "Run PARSER for its result but consume nothing: on success return its value
+with the position unmoved, so the same input can be parsed again by whatever
+follows.
+
+A failure is reported at the position PARSER reached, but with commitment
+cleared -- a speculative peek must never stop an enclosing ALT from trying
+other branches. NOT-FOLLOWED-BY is the negative form."
   (%run-parser/if-success
    parser input position
    (lambda (value next result)
@@ -120,6 +148,12 @@ enclosing OPT/ALT may still recover. FParsec's `notEmpty`."
              (%copy-parse-failure result :committed-p nil)))))
 
 (define-parser-function not-followed-by (parser) :not-followed-by
+  "Succeed with T, consuming nothing, exactly when PARSER would fail here; fail
+when PARSER would succeed.
+
+The negative lookahead used to make a prefix match maximal -- requiring that a
+keyword is NOT followed by an identifier character is what stops \"iffy\" from
+lexing as IF. Never consumes input in either outcome."
   (%run-parser/if-success
    parser input position
    (lambda (value next failure)
@@ -136,6 +170,9 @@ enclosing OPT/ALT may still recover. FParsec's `notEmpty`."
      (%success t position (parse-failure-diagnostics failure)))))
 
 (defun between (open parser close)
+  "Parse OPEN, PARSER, then CLOSE, returning only PARSER's value -- the bracketed
+form, and the composition PRECEDED-BY and TERMINATED-BY each cover one half of.
+SURROUNDED-BY is the symmetric-delimiter shorthand."
   (%keep-right open (%keep-left parser close)))
 
 (defun surrounded-by (delimiter parser)
@@ -153,6 +190,13 @@ for quotes, pipes, or any symmetric bracket."
 (define-delimited-separated-parser delimited-sep-end-by sep-end-by)
 
 (define-parser-function end-of-input () :eoi
+  "Succeed with T, consuming nothing, only at the end of the token stream;
+otherwise fail with an \"Unexpected trailing token\" diagnostic at the offending
+token.
+
+Compose this into a grammar when only part of it must reach the end. PARSE-ALL
+already enforces full consumption for a whole-document parse, so this is the
+finer-grained tool, not a replacement for it."
   (let ((tokens (ensure-vector input)))
     (if (>= position (length tokens))
         (%success t position)

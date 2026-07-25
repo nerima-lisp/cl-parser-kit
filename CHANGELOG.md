@@ -2,6 +2,36 @@
 
 ## Unreleased
 
+- fixed `define-parser-function` silently discarding every combinator docstring. It spliced
+  its whole `&body` -- docstring included -- into the inner `(lambda (input position) ...)`,
+  so the string documented an anonymous closure no caller can reach and
+  `(documentation 'trace-parser 'function)` returned `NIL`. 14 hand-written docstrings were
+  affected, including `trace-parser`'s 12-line explanation of its `:stream` default and
+  `memoize`'s left-recursion notes. The macro now hoists a leading docstring onto the
+  generated `defun`; a lone string body is still a return value, not documentation
+- documented the rest of the public surface in the image, not only in `API.md`: docstrings for
+  40 hand-written exported functions (including the entry points `run-parser`, `parse-tokens`,
+  `parse-all`, `parse-source`, `parse-pratt-all`, `parse-pratt-source`, and the terminals
+  `literal`, `type-token`, `satisfies-token`), documentation strings for all 21 exported
+  structs and conditions (`span`, `token`, `parser`, `diagnostic`, `parse-failure`,
+  `pratt-table`, every resource-limit condition), and generated docstrings from the five
+  definition macros that produce exported functions -- `define-separated-parser` (the `sep-by`
+  family), `define-delimited-separated-parser`, `define-chain-parser` (`chainl1`/`chainr1`),
+  `define-diagnostic-constructor`, `define-token-mapped-function`,
+  `define-pratt-register-operator`, and `define-tree-node-family`'s struct and `->sexp`
+  functions. `describe` and `documentation` now answer for every exported symbol
+- added `:documentation` to `define-value-limit-condition`, which had no way to document the
+  conditions it defines, and supplied one at both call sites (`tree-depth-limit-exceeded`,
+  `tree-node-limit-exceeded`) plus the two `define-resource-limit-condition` call sites that
+  had omitted it (`diagnostic-resource-limit-exceeded`, `parse-failure-resource-limit-exceeded`)
+- added `t/api-surface-test.lisp`, the public-surface contract this release freezes: every
+  exported symbol names something (an `export` of a misspelled name interns it and succeeds
+  silently), and every exported symbol is documented from the running image -- directly, or,
+  for a `defstruct` accessor or a `define-condition` reader that cannot carry a docstring at
+  its definition site in portable Common Lisp, through its documented owning type. Nothing
+  checked this before, which is why the `define-parser-function` defect survived the whole 0.x
+  line
+
 - added `aarch64-darwin` to the flake's supported `systems`, and fixed `default` package's
   `meta.platforms` (previously hardcoded to `pkgs.lib.platforms.linux`, which -- unlike
   `systems` -- is actually enforced by nixpkgs' `check-meta.nix` and blocks a build outright,

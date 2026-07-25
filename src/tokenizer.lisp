@@ -31,12 +31,26 @@ allocation.")
 
 (defstruct (token-rule (:constructor make-token-rule
                             (&key type matcher skip-p)))
+  "One tokenizer rule: MATCHER is called with (SOURCE INDEX) and returns NIL for
+no match, or T plus the matched length and optionally the text and value of a
+token of TYPE. SKIP-P T consumes the match without emitting a token, which is
+how whitespace and comments disappear before the parser ever sees them.
+
+Written directly only for a custom lexeme; the MAKE-*-RULE constructors cover
+the usual classes."
   type
   matcher
   skip-p)
 
 (defstruct (tokenizer (:constructor make-tokenizer
                           (&key rules (unknown-token-type :unknown))))
+  "An ordered list of TOKEN-RULEs applied to source text by TOKENIZE.
+
+Order is the disambiguation mechanism: the first rule that matches at a
+position wins, so a keyword rule must precede the identifier rule that would
+also match it. When no rule matches, one character is consumed as a token of
+UNKNOWN-TOKEN-TYPE rather than the tokenizer stalling or erroring, leaving the
+decision about bad input to the parser."
   rules
   unknown-token-type)
 

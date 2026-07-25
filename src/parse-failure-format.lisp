@@ -114,6 +114,10 @@ rather than the built-in string form. Always returns at least one diagnostic."
       (list (%parse-failure-default-diagnostic failure))))
 
 (defun parse-failure->string (failure)
+  "Render FAILURE as a human-readable report -- PARSE-FAILURE->DIAGNOSTICS run
+through DIAGNOSTICS->STRING -- so a failure with no diagnostics of its own
+still prints its synthesized \"Expected X, got Y\" line. This is the string most
+callers want to show a user directly."
   (let ((*diagnostic-source-line-start-cache* (make-hash-table :test 'eq)))
     (with-output-to-string (out)
       (%write-diagnostics (parse-failure->diagnostics failure) out))))

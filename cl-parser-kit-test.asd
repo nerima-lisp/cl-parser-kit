@@ -77,7 +77,8 @@
                (:file "examples-files-test")
                (:file "examples-ops-test")
                (:file "trees-test")
-               (:file "trees-traversal-test"))
+               (:file "trees-traversal-test")
+               (:file "api-surface-test"))
   :perform (asdf:test-op (op system)
              (declare (ignore op system))
              (unless (uiop:symbol-call :cl-weave

@@ -42,6 +42,13 @@ equivalent to (SEQ A B C), inheriting SEQ's commitment semantics."
            (%run-parser-sequence items input position)))))
 
 (define-parser-function option (default parser) :option
+  "Run PARSER, falling back to DEFAULT and consuming nothing when it fails
+recoverably -- OPT with a caller-chosen absent value instead of NIL, so an
+omitted clause can default to 0, an empty list, or any sentinel that is not
+confusable with a parsed NIL.
+
+A committed failure still propagates, so a half-consumed construct is never
+silently swallowed."
   ;; Reuse OPT's exact recoverable machinery, only substituting DEFAULT for
   ;; NIL as the fallback value. A recoverable (non-committed, progressing-safe)
   ;; failure yields DEFAULT and consumes nothing; a committed failure still

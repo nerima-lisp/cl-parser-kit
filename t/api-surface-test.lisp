@@ -1,0 +1,140 @@
+(in-package :cl-parser-kit/test)
+
+;;;; The v1.0.0 public-surface contract.
+;;;;
+;;;; Every exported symbol is frozen under semantic versioning from v1.0.0 on,
+;;;; so two properties have to hold for the package as a whole rather than
+;;;; symbol by symbol: nothing is exported that has no definition, and nothing
+;;;; is exported that a user cannot look up from the running image.
+;;;;
+;;;; The second check is not hypothetical. DEFINE-PARSER-FUNCTION used to
+;;;; splice its whole BODY -- docstring included -- into the inner
+;;;; (LAMBDA (INPUT POSITION) ...), so 14 hand-written combinator docstrings
+;;;; landed on an anonymous closure and DOCUMENTATION returned NIL for the
+;;;; combinator a caller actually names. Nothing detected that for the entire
+;;;; 0.x line, because nothing looked.
+
+(defun %api-external-symbols ()
+  "Every external symbol of :CL-PARSER-KIT, sorted by name for stable reporting."
+  (let ((symbols '()))
+    (do-external-symbols (symbol (find-package :cl-parser-kit))
+      (push symbol symbols))
+    (sort symbols #'string< :key #'symbol-name)))
+
+(defun %api-symbol-defined-p (symbol)
+  "True when SYMBOL names anything at all: a function, macro, variable, or type.
+
+An EXPORT of a misspelled name interns the symbol and succeeds silently, so
+this is what separates a real export from a typo in the DEFPACKAGE."
+  (or (fboundp symbol)
+      (boundp symbol)
+      (macro-function symbol)
+      (and (find-class symbol nil) t)))
+
+(defun %api-symbol-own-documentation (symbol)
+  "SYMBOL's own documentation under any doc-type it could plausibly carry one."
+  (or (documentation symbol 'function)
+      (documentation symbol 'variable)
+      (documentation symbol 'type)
+      (documentation symbol 'structure)
+      (let ((class (find-class symbol nil)))
+        (and class (documentation class t)))))
+
+(defparameter *api-renamed-reader-owners*
+  '(("TREE-DEPTH-LIMIT-" . "TREE-DEPTH-LIMIT-EXCEEDED")
+    ("TREE-NODE-LIMIT-" . "TREE-NODE-LIMIT-EXCEEDED"))
+  "Condition readers whose name is not their condition's name plus a suffix.
+
+DEFINE-VALUE-LIMIT-CONDITION's :READER-PREFIX exists so an exported reader can
+stay shorter than the condition it reads (TREE-DEPTH-LIMIT-DEPTH, not
+TREE-DEPTH-LIMIT-EXCEEDED-DEPTH), which is exactly what defeats the prefix
+match below. Every other reader and accessor in this library is its owner's
+name plus a suffix and needs no entry here.")
+
+(defun %api-documented-type-names ()
+  "Names of every exported type that carries its own documentation, longest
+first so TOKEN-RULE-TYPE resolves to TOKEN-RULE rather than to TOKEN."
+  (sort (loop for symbol in (%api-external-symbols)
+              when (and (find-class symbol nil)
+                        (%api-symbol-own-documentation symbol))
+                collect (symbol-name symbol))
+        #'>
+        :key #'length))
+
+(defun %api-name-prefixed-by-p (name prefix)
+  (let ((length (length prefix)))
+    (and (> (length name) length)
+         (string= prefix name :end2 length))))
+
+(defun %api-documenting-owner (symbol)
+  "The documented type SYMBOL inherits its documentation from, or NIL.
+
+A DEFSTRUCT accessor and a DEFINE-CONDITION :READER cannot carry a docstring at
+their definition site in portable Common Lisp -- only the type they belong to
+can -- so documenting the type is the whole obligation for those, and this is
+how that is recognized rather than waived."
+  (let ((name (symbol-name symbol)))
+    (or (loop for type-name in (%api-documented-type-names)
+              when (or (%api-name-prefixed-by-p name (concatenate 'string type-name "-"))
+                       ;; A DEFSTRUCT :CONSTRUCTOR is as undocumentable as an
+                       ;; accessor, and belongs to the same type.
+                       (string= name (concatenate 'string "MAKE-" type-name)))
+                return type-name)
+        (loop for (reader-prefix . owner-name) in *api-renamed-reader-owners*
+              when (and (%api-name-prefixed-by-p name reader-prefix)
+                        (let ((owner (find-symbol owner-name :cl-parser-kit)))
+                          (and owner (%api-symbol-own-documentation owner))))
+                return owner-name))))
+
+(it-sequential "every-exported-symbol-actually-names-something-test"
+  (with-soft-assertions
+    (dolist (symbol (%api-external-symbols))
+      (expect (%api-symbol-defined-p symbol) :to-be-truthy))))
+
+(it-sequential "every-exported-symbol-is-documented-in-the-running-image-test"
+  (with-soft-assertions
+    (dolist (symbol (%api-external-symbols))
+      (expect (or (%api-symbol-own-documentation symbol)
+                  (%api-documenting-owner symbol))
+              :to-be-truthy))))
+
+(it-sequential "the-public-surface-is-not-empty-and-has-no-duplicates-test"
+  ;; Guards the two checks above against passing vacuously: a DO-EXTERNAL-SYMBOLS
+  ;; over a package that failed to load would satisfy both by iterating nothing.
+  (let ((symbols (%api-external-symbols)))
+    (expect (> (length symbols) 200) :to-be-truthy)
+    (expect (length (remove-duplicates symbols)) :to-equal (length symbols))))
+
+(it-sequential "define-parser-function-hoists-its-docstring-onto-the-function-test"
+  ;; The specific regression: a docstring at the head of the body documents the
+  ;; combinator, not the inner :FN closure. TRACE-PARSER is the longest-standing
+  ;; instance, and MANY covers a form whose body is a single call.
+  (with-soft-assertions
+    (dolist (name '(trace-parser many opt attempt memoize skip-until))
+      (expect (documentation name 'function) :to-be-truthy))))
+
+(defun %api-parser-function-expansion-docstring (form)
+  "The docstring the DEFUN generated by FORM would carry, or NIL.
+
+Reads the expansion rather than defining and describing a throwaway parser,
+because the distinction under test is a macroexpansion-time one: whether the
+leading string ends up in the DEFUN's docstring position at all."
+  ;; (DEFUN name lambda-list [docstring] body...) -- the docstring, when the
+  ;; macro hoists one, is the fourth element, right after the lambda list.
+  (let ((expansion (macroexpand-1 form)))
+    (and (eq 'defun (first expansion))
+         (stringp (fourth expansion))
+         (fourth expansion))))
+
+(it-sequential "define-parser-function-keeps-a-lone-string-body-as-a-value-test"
+  ;; The hoist must not fire when the string IS the body -- then it is the
+  ;; parser's return value, not documentation about it.
+  (expect (%api-parser-function-expansion-docstring
+           '(cl-parser-kit::define-parser-function %api-value-parser () :value
+             "the value"))
+          :to-be-null)
+  (expect (%api-parser-function-expansion-docstring
+           '(cl-parser-kit::define-parser-function %api-documented-parser () :doc
+             "the docstring"
+             (cl-parser-kit::%success t position)))
+          :to-equal "the docstring"))

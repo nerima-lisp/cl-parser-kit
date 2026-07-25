@@ -116,6 +116,11 @@ identifier character."
              (values t literal-length text value))))))))
 
 (defun make-whitespace-rule (&key (type :whitespace) skip-p)
+  "Build a TOKEN-RULE matching a maximal run of whitespace as a token of TYPE.
+
+SKIP-P T drops the run instead of emitting it, which is what most grammars
+want and is also the faster path -- a skipped match never copies the matched
+text out of the source."
   (%token-rule
    (lambda (source index)
      (let ((end (%scan-while source index #'char-whitespace-p)))
@@ -152,6 +157,12 @@ not need MAKE-LITERAL-RULE's multi-character matching."
              (values t 1 text (funcall value-function text)))))))))
 
 (defun make-predicate-rule (type predicate &key (min-length 1) skip-p (value-function #'identity))
+  "Build a TOKEN-RULE matching a maximal run of characters satisfying PREDICATE as
+a token of TYPE, provided the run is at least MIN-LENGTH characters.
+
+The general-purpose character-class rule: MAKE-WHITESPACE-RULE and
+MAKE-IDENTIFIER-RULE are the specialized forms. VALUE-FUNCTION maps the matched
+text to the token's value, and SKIP-P drops the match entirely."
   (check-type min-length (integer 1))
   (%token-rule
    (lambda (source index)
@@ -164,6 +175,13 @@ not need MAKE-LITERAL-RULE's multi-character matching."
                                   skip-p
                                   (start-predicate #'identifier-start-char-p)
                                   (continue-predicate #'identifier-char-p))
+  "Build a TOKEN-RULE matching an identifier as a token of TYPE: one character
+satisfying START-PREDICATE followed by a maximal run satisfying
+CONTINUE-PREDICATE.
+
+Splitting the two predicates is what keeps a leading digit out of an
+identifier while still allowing digits after the first character; override
+either to admit hyphens, dollar signs, or any other host-language convention."
   (%token-rule
    (lambda (source index)
      (%match-scanned-token
@@ -199,6 +217,14 @@ with PARSE-INTEGER only."
         (parse-integer text))))
 
 (defun make-number-rule (&key (type :number) skip-p)
+  "Build a TOKEN-RULE matching a decimal integer or simple float as a token of
+TYPE, whose value is the parsed number rather than its text.
+
+At most one interior decimal point is accepted, so a hostile run like
+\"1.2.3.4\" tokenizes as several numbers instead of one malformed lexeme, and
+lexeme length is bounded by *MAXIMUM-NUMBER-LEXEME-LENGTH*. Use
+MAKE-RADIX-INTEGER-RULE or MAKE-FLOAT-RULE for hex/binary literals or exponent
+notation."
   (%token-rule
    (lambda (source index)
      (%match-scanned-token

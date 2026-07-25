@@ -10,11 +10,17 @@ trees.")
 
 (define-value-limit-condition tree-depth-limit-exceeded depth
     "Tree depth ~D exceeds maximum ~D"
-  :reader-prefix tree-depth-limit)
+  :reader-prefix tree-depth-limit
+  :documentation "Signalled by a tree traversal, conversion, comparison, or
+rendering helper when a node nests deeper than *MAXIMUM-TREE-DEPTH*, instead of
+recursing until the control stack is exhausted.")
 
 (define-value-limit-condition tree-node-limit-exceeded count
     "Tree node count ~D exceeds maximum ~D"
-  :reader-prefix tree-node-limit)
+  :reader-prefix tree-node-limit
+  :documentation "Signalled by a tree helper when one call would visit more than
+*MAXIMUM-TREE-NODES* nodes -- the breadth bound to TREE-DEPTH-LIMIT-EXCEEDED's
+depth bound, so a wide tree is refused as decisively as a deep one.")
 
 (define-condition tree-child-list-invalid (error)
   ((kind :initarg :kind :reader tree-child-list-invalid-kind))
@@ -22,7 +28,10 @@ trees.")
              (format stream "Tree child list is ~A"
                      (ecase (tree-child-list-invalid-kind condition)
                        (:circular "circular")
-                       (:improper "improper"))))))
+                       (:improper "improper")))))
+  (:documentation "Signalled when a tree operation is handed a children list that
+is circular or improper, rather than following it into an unbounded walk. KIND
+is :CIRCULAR or :IMPROPER."))
 
 (defun %check-tree-depth-limit (depth)
   (when (> depth *maximum-tree-depth*)

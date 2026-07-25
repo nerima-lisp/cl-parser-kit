@@ -226,7 +226,12 @@
                  ,name cl-parser-kit:sep-by))))
     (expect (first expansion) :to-equal 'defun)
     (expect (second expansion) :to-equal name)
-    (expect (first (fourth expansion))
+    ;; The generated DEFUN carries a docstring naming the separator combinator
+    ;; it wraps, so the body it delegates to is the form after it, not the
+    ;; fourth element as it was before the docstring was added.
+    (expect (stringp (fourth expansion)) :to-be-truthy)
+    (expect (search "SEP-BY" (fourth expansion)) :to-be-truthy)
+    (expect (first (fifth expansion))
             :to-equal 'cl-parser-kit:between)
-    (expect (first (third (fourth expansion)))
+    (expect (first (third (fifth expansion)))
             :to-equal 'cl-parser-kit:sep-by)))

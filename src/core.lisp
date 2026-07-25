@@ -43,7 +43,7 @@ only things that differ between boundaries."
        ,@(when documentation `((:documentation ,documentation))))))
 
 (defmacro define-value-limit-condition (name value-slot report-control-string
-                                         &key (reader-prefix name))
+                                         &key (reader-prefix name) documentation)
   "Define NAME as an ERROR condition carrying VALUE-SLOT and :LIMIT initargs
 with matching READER-PREFIX-VALUE-SLOT / READER-PREFIX-LIMIT readers (READER-PREFIX
 defaults to NAME; override it to keep a public reader name shorter than the
@@ -52,7 +52,10 @@ condition's own, as TREE-DEPTH-LIMIT-EXCEEDED does), whose report calls
 
 The single-limit sibling of DEFINE-RESOURCE-LIMIT-CONDITION above: use this
 for a boundary with exactly one limit kind, so no :KIND discriminator or
-report argument is needed."
+report argument is needed. DOCUMENTATION, as there, becomes the condition
+class's own docstring -- supply it for every exported condition, since a
+:REPORT alone tells a reader what one instance prints, not when the condition
+is signalled."
   (let ((value-reader (%resource-limit-reader-symbol reader-prefix value-slot))
         (limit-reader (%resource-limit-reader-symbol reader-prefix 'limit)))
     `(define-condition ,name (error)
@@ -61,7 +64,8 @@ report argument is needed."
        (:report (lambda (condition stream)
                   (format stream ,report-control-string
                           (,value-reader condition)
-                          (,limit-reader condition)))))))
+                          (,limit-reader condition))))
+       ,@(when documentation `((:documentation ,documentation))))))
 
 (defun %walk-bounded-list (list limit on-limit-exceeded item-fn)
   "Call (FUNCALL ITEM-FN item) for each item in LIST in order, bounding the

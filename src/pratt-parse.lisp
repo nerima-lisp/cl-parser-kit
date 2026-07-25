@@ -166,12 +166,19 @@ SETF to raise it for intentionally large or deep expressions.")
            (values nil nil next failure))))))
 
 (defun parse-pratt-all (tokens table &key (position 0) (min-binding-power 0))
+  "Parse a precedence expression from TOKENS with TABLE exactly as PARSE-PRATT
+does, but additionally require that the expression consume every token: a parse
+that stops early becomes a trailing-input PARSE-FAILURE. The whole-input form,
+matching PARSE-ALL's relationship to PARSE-TOKENS."
   (%parse-with-full-consumption (tokens)
       (parse-pratt tokens table
                    :position position
                    :min-binding-power min-binding-power)))
 
 (defun parse-pratt-source (source tokenizer table &key (position 0) (min-binding-power 0))
+  "Tokenize the string SOURCE with TOKENIZER, then PARSE-PRATT-ALL the result with
+TABLE -- the one-call path from expression text to a precedence-parsed value,
+and the Pratt counterpart of PARSE-SOURCE."
   (let ((tokens (tokenize source tokenizer)))
     (parse-pratt-all tokens table
                      :position position

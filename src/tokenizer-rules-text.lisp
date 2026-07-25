@@ -91,11 +91,22 @@ literally."
                (%emit-scanned-token-match source index end value-function))))))))
 
 (defun make-line-comment-rule (&key (type :comment) (prefix ";") (skip-p t) (value-function #'identity))
+  "Build a TOKEN-RULE matching a comment that starts at PREFIX and runs to the end
+of the line (or the end of the source) as a token of TYPE.
+
+SKIP-P defaults to T, since a line comment is normally discarded; pass NIL to
+keep it, for a formatter or a CST that must round-trip the original text."
   (%ensure-non-empty-string prefix "prefix")
   (%make-prefixed-comment-rule type skip-p value-function prefix #'%line-comment-end))
 
 (defun make-block-comment-rule (&key (type :comment) (start "/*") (end "*/") (skip-p t)
                                   (value-function #'identity))
+  "Build a TOKEN-RULE matching a comment delimited by START and END as a token of
+TYPE, ending at the first END (or the end of the source when it is never
+closed) -- these comments do not nest; use MAKE-NESTED-BLOCK-COMMENT-RULE when
+they must.
+
+SKIP-P defaults to T, as for MAKE-LINE-COMMENT-RULE."
   (%ensure-non-empty-string start "start")
   (%ensure-non-empty-string end "end")
   (%make-prefixed-comment-rule type skip-p value-function start

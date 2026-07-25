@@ -34,7 +34,11 @@ NIL entries are skipped for rendering but still counted so nil-only or circular
 batches terminate.")
 
 (define-resource-limit-condition diagnostic-resource-limit-exceeded
-    "Diagnostic ~A count ~D exceeds maximum ~D")
+    "Diagnostic ~A count ~D exceeds maximum ~D"
+  :documentation "Signalled while rendering diagnostics when a caller-supplied
+list exceeds one of the *MAXIMUM-DIAGNOSTIC-** bounds -- KIND names which one.
+Catchable, so a hostile or runaway diagnostic batch becomes a reportable error
+rather than an unbounded string.")
 
 (defun %bounded-line-text (source start end)
   (let ((capped-end (min end (+ start *maximum-diagnostic-line-length*))))
@@ -204,5 +208,9 @@ numbering stays consistent with it. Shared by %COMPUTE-SOURCE-LINE-STARTS
    (diagnostic-fixes diagnostic) :fixes #'%write-fix-it out))
 
 (defun diagnostic->string (diagnostic)
+  "Render DIAGNOSTIC as a human-readable multi-line string: its kind and message,
+a file:line:column reference and the underlined source line when its span
+carries source text, then its notes and fix-it suggestions. DIAGNOSTICS->STRING
+is the list form."
   (with-output-to-string (out)
     (%write-diagnostic diagnostic out)))

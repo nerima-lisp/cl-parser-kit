@@ -2,6 +2,13 @@
 
 (defstruct (token (:constructor %make-token
                         (&key type text value metadata span start end)))
+  "One lexical unit: a TYPE (the category parsers match on), the TEXT it was
+lexed from, the VALUE that text denotes, free-form METADATA, and its source
+location as a SPAN and/or bare START/END offsets.
+
+TEXT and VALUE are separate so a number token can carry both \"0x1F\" and 31, and
+a skipped token can carry neither. Build one with MAKE-TOKEN, which derives the
+SPAN when only offsets are supplied."
   type
   text
   value
@@ -75,6 +82,12 @@ TOKENS may be any sequence; the result is always a vector, matching TOKENIZE."
             'vector)))
 
 (defun make-token (&key type text value metadata span start end)
+  "Build a TOKEN of TYPE carrying TEXT, VALUE, and arbitrary METADATA.
+
+Supply either a full SPAN or bare START/END offsets: when only offsets are
+given, an equivalent SPAN is derived and stored, so every token built through
+this constructor has a usable TOKEN-SPAN and downstream diagnostics never have
+to special-case an offset-only token."
   (let ((token (%make-token :type type
                             :text text
                             :value value
