@@ -18,6 +18,29 @@ semantic versioning.
 - major releases may remove or redefine public behavior with explicit
   migration notes
 
-`0.x` releases may still make breaking changes in a minor bump while the
-public contract stabilizes; see `CHANGELOG.md` for what changed in each
-release.
+## Stability From v1.0.0
+
+`v1.0.0` freezes the public contract. Before it, a `0.x` minor bump could still
+make breaking changes while the surface settled; from `v1.0.0` on, that is a
+major release and nothing else.
+
+What is frozen is every symbol exported from the `cl-parser-kit` package: its
+name, its documented arguments, and its documented behavior. As of `v1.0.0`
+that is 290 symbols, each documented in `API.md` and, since `v1.0.0`, from the
+running image as well — `t/api-surface-test.lisp` enforces both, so an
+undocumented export fails CI rather than shipping.
+
+What is not frozen:
+
+- anything named with a leading `%`, and anything not exported: internal by
+  construction, changeable in any release
+- the resource-limit defaults (`*maximum-parser-tokens*` and the rest). The
+  specials themselves are public and rebindable; the specific numbers may be
+  retuned in a minor release
+- the exact text of a diagnostic or parse-failure message. Its structure
+  (`diagnostic-kind`, `diagnostic-span`, `parse-failure-expected`, and the
+  other readers) is the contract; the prose is not, so parse structure rather
+  than rendered strings
+- performance characteristics, which may improve in any release
+
+See `CHANGELOG.md` for what changed in each release.

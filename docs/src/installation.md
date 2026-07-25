@@ -43,6 +43,11 @@ or team use, pin a tagged release (or a reviewed commit) and rerun the
 verification entry point from that checkout. See [Versioning Policy](versioning.md)
 for the release model.
 
+From `v1.0.0` on, the exported surface is frozen under semantic versioning: a
+breaking change to any exported symbol requires a major release. The
+[Versioning Policy](versioning.md) covers exactly what that includes and what
+it deliberately does not.
+
 ## Test system
 
 To load the repository test system explicitly:

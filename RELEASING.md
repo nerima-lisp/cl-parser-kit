@@ -8,9 +8,8 @@ below applies to every release, not only the first.
 Before cutting a public release:
 
 1. run `nix flake check` from a clean checkout to execute the full
-   reproducible CI gate (compile check, tests, coverage, and lint); until the
-   first public release is cut, this repeatable CI path remains the release
-   readiness gate
+   reproducible CI gate (compile check, tests, coverage, and lint); this
+   repeatable CI path is the release readiness gate
 2. run `./scripts/run-release-audit.sh` from the same checkout
 3. rerun `sbcl --script scripts/run-compile-check.lisp` to prove both shipped
    ASD systems still compile from a raw checkout
@@ -32,6 +31,14 @@ Before cutting a public release:
     `nix build .#docs` (or `mkdocs build --strict --config-file docs/mkdocs.yml`)
     to prove the published site still builds cleanly
 11. summarize user-visible changes in `CHANGELOG.md`
+12. diff the exported symbol list against the previous tag
+    (`git diff <previous-tag> -- src/package.lisp`) and confirm the version
+    number matches what that diff implies: from `v1.0.0` on, a removed or
+    renamed export, or a changed documented contract, is a major release. See
+    `VERSIONING.md`
+13. bump `:version` in `cl-parser-kit.asd` and `cl-parser-kit-test.asd`, and
+    both `version` fields in `flake.nix`, to the version being tagged — the
+    Nix derivation names carry it, so a stale value ships silently
 
 ## After a Release
 

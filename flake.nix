@@ -38,7 +38,7 @@
         pkgs:
         pkgs.stdenvNoCC.mkDerivation {
           pname = "cl-parser-kit-docs";
-          version = "0.4.0";
+          version = "1.0.0";
           src = pkgs.lib.fileset.toSource {
             root = ./docs;
             fileset = pkgs.lib.fileset.unions [
@@ -83,7 +83,7 @@
 
         default = pkgs.stdenvNoCC.mkDerivation {
           pname = "cl-parser-kit";
-          version = "0.4.0";
+          version = "1.0.0";
           src = self;
           nativeBuildInputs = [ pkgs.sbcl ];
           buildPhase = ''

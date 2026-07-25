@@ -124,6 +124,11 @@ The repository ships tagged releases starting with `v0.1.0`. For production or
 team use, pin a tagged release (or a reviewed commit) and rerun the
 verification entry point from that checkout.
 
+From `v1.0.0` on, the exported surface is frozen under semantic versioning: a
+breaking change to any exported symbol requires a major release. See
+[`VERSIONING.md`](./VERSIONING.md) for exactly what that covers and what it
+deliberately does not.
+
 ## Verification
 
 From a repository checkout on a supported system, run the full suite with:

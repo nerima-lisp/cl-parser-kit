@@ -15,8 +15,10 @@ the API practical, testable, and easy to audit.
 
 - keep `CHANGELOG.md` current for every tagged release
 - tighten the documentation around recommended parser composition and
-  upgrade patterns as the public API settles
-- keep the public surface small and intentional
+  upgrade patterns
+- keep the public surface small and intentional. `v1.0.0` froze it under
+  semantic versioning (see the [versioning policy](versioning.md)), so an
+  addition is now a commitment to keep supporting it, not just a convenience
 
 ## Non-Goals
 

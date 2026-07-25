@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 1.0.0 - 2026-07-26
+
+The first stable release. `v1.0.0` freezes the 290 symbols exported from the
+`cl-parser-kit` package under semantic versioning: from here, a breaking change
+to any of them requires a major release. `VERSIONING.md` states precisely what
+that covers, and — as importantly — what it deliberately does not (internals,
+resource-limit default values, diagnostic message prose, performance).
+
+There is no migration from `v0.4.0`: nothing in the public contract changed.
+What changed is that the contract is now written down, enforced by a test, and
+answerable from the running image rather than only from `API.md`.
+
 - fixed `define-parser-function` silently discarding every combinator docstring. It spliced
   its whole `&body` -- docstring included -- into the inner `(lambda (input position) ...)`,
   so the string documented an anonymous closure no caller can reach and
@@ -31,7 +43,10 @@
   its definition site in portable Common Lisp, through its documented owning type. Nothing
   checked this before, which is why the `define-parser-function` defect survived the whole 0.x
   line
-
+- replaced `VERSIONING.md`'s `0.x`-era caveat ("minor bumps may still break the public
+  contract") with the post-1.0 stability statement, and mirrored it into `docs/src/`, `README.md`,
+  and `docs/src/installation.md`; bumped `:version` in both ASD systems and both `flake.nix`
+  derivations from `0.4.0` to `1.0.0`
 - added `aarch64-darwin` to the flake's supported `systems`, and fixed `default` package's
   `meta.platforms` (previously hardcoded to `pkgs.lib.platforms.linux`, which -- unlike
   `systems` -- is actually enforced by nixpkgs' `check-meta.nix` and blocks a build outright,

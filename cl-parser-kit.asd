@@ -1,6 +1,6 @@
 (asdf:defsystem "cl-parser-kit"
   :description "Small parser toolkit for Common Lisp text languages."
-  :version "0.4.0"
+  :version "1.0.0"
   :author "takeokunn"
   :license "MIT"
   :homepage "https://github.com/nerima-lisp/cl-parser-kit"
