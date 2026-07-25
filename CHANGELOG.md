@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- fixed `bootstrap-load-project-asd-definitions-preserves-relative-component-paths-test`
+  failing on any checkout whose path contains a symlink. It compared ASDF's
+  `component-pathname` -- which ASDF resolves when registering a system -- against
+  `current-project-root`, which does not resolve, so on macOS a checkout under `/tmp`
+  produced `/private/tmp/.../src/package.lisp` versus `/tmp/.../src/package.lisp`: two
+  correct spellings of the same file, reported as a mismatch. Both sides are now compared
+  as `truename`s, which is the file-identity question the test actually asks. Test-only;
+  no library behavior is affected. Found by running the v1.0.0 release gate against a clean
+  `git clone` of the tag in a scratch directory rather than against the working tree, which
+  is the only way the symlinked-path case comes up
+
 ## 1.0.0 - 2026-07-26
 
 The first stable release. `v1.0.0` freezes the 290 symbols exported from the

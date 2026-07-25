@@ -18,4 +18,11 @@
                                                                     "COMPONENT-PATHNAME"
                                                                     component))))
       (expect component :to-be-truthy)
-      (expect (namestring actual-path) :to-equal (namestring expected-path)))))
+      ;; Compare TRUENAMEs, not raw namestrings: ASDF resolves symlinks when it
+      ;; registers a system, CURRENT-PROJECT-ROOT does not, so a checkout under
+      ;; a symlinked path yields two correct spellings of the same file
+      ;; ("/private/tmp/..." vs "/tmp/..." on macOS) and a spurious failure.
+      ;; The claim under test is that the component resolves to the project's
+      ;; own src/package.lisp, which is a file identity question.
+      (expect (namestring (truename actual-path))
+              :to-equal (namestring (truename expected-path))))))
