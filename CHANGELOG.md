@@ -6,6 +6,10 @@
   stable, SemVer-committed release; audit-driven correctness fixes only in
   reporters/matchers/CLI/runner internals, no change to any macro or API this
   project uses)
+- extended mutation testing (`t/mutation-testing-test.lisp`) to a second
+  dense boundary-comparison predicate, `%fix-it-region-conflicts-p`
+  (previously only `%merge-parse-failure-pair` was mutation-tested);
+  confirms every mutant of its 4-comparison or/and overlap guard is killed
 
 ## 0.4.0 - 2026-07-25
 

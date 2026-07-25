@@ -70,3 +70,54 @@
            (expect (plusp (length results)) :to-be-truthy)
            (assert-mutation-score results 1.0))
       (eval original-form))))
+
+;;; A second mutation target: %FIX-IT-REGION-CONFLICTS-P's 4-comparison
+;;; or/and overlap guard (extracted from %NON-OVERLAPPING-FIX-IT-REGIONS in an
+;;; earlier readability pass). Same rationale as the merge-pair test above --
+;;; dense boundary-comparison logic is exactly where a single flipped operator
+;;; silently changes which fix-it edits get rejected as overlapping.
+
+(defun %fix-it-region-conflicts-p-defun-form ()
+  '(defun cl-parser-kit::%fix-it-region-conflicts-p (start end previous-start previous-end)
+    (or (< start previous-end)
+        (and previous-start
+             (= start previous-start)
+             (or (/= start end)
+                 (/= previous-start previous-end))))))
+
+(defun %region-conflicts-mutation-cases ()
+  ;; Each case pins down one branch of the outer OR / inner AND / inner OR:
+  ;; (start end previous-start previous-end) -> expected.
+  (list (list '(2 3 0 5) t)     ; start < previous-end alone decides it
+       (list '(5 6 nil 5) nil) ; no previous region at all
+       (list '(5 6 3 5) nil)   ; previous-start present but != start
+       (list '(5 6 5 5) t)     ; same start, non-zero-width current
+       (list '(5 5 5 7) t)     ; same start, non-zero-width previous
+       (list '(5 5 5 5) nil))) ; same start, both zero-width -- the allowed case
+
+(defun %region-conflicts-snapshot ()
+  (mapcar (lambda (case)
+            (destructuring-bind (args expected) case
+              (declare (ignore expected))
+              (apply #'cl-parser-kit::%fix-it-region-conflicts-p args)))
+          (%region-conflicts-mutation-cases)))
+
+(it-sequential "mutation-testing-fix-it-region-conflicts-p-fully-killed-test"
+  (let* ((original-form (%fix-it-region-conflicts-p-defun-form))
+         (expected-outputs (mapcar #'second (%region-conflicts-mutation-cases))))
+    ;; Confirm the hand-derived expectations above actually match reality
+    ;; before trusting them as the mutation-kill oracle.
+    (expect (%region-conflicts-snapshot) :to-equal expected-outputs)
+    (unwind-protect
+         (let ((results
+                 (run-mutations
+                  original-form
+                  (lambda (mutant-form mutation)
+                    (declare (ignore mutation))
+                    (eval mutant-form)
+                    (handler-case
+                        (equal (%region-conflicts-snapshot) expected-outputs)
+                      (error () nil))))))
+           (expect (plusp (length results)) :to-be-truthy)
+           (assert-mutation-score results 1.0))
+      (eval original-form))))
