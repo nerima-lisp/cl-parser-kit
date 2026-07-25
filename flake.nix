@@ -4,11 +4,11 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     cl-weave = {
-      url = "github:nerima-lisp/cl-weave/v0.10.0";
+      url = "github:nerima-lisp/cl-weave/v0.11.0";
       flake = false;
     };
     cl-prolog = {
-      url = "github:nerima-lisp/cl-prolog/v0.7.0";
+      url = "github:nerima-lisp/cl-prolog/v0.8.0";
       flake = false;
     };
     paredit-cli = {
@@ -32,6 +32,35 @@
       ];
       forAllSystems =
         function: nixpkgs.lib.genAttrs systems (system: function (import nixpkgs { inherit system; }));
+
+      mkDocs =
+        pkgs:
+        pkgs.stdenvNoCC.mkDerivation {
+          pname = "cl-parser-kit-docs";
+          version = "0.3.0";
+          src = pkgs.lib.fileset.toSource {
+            root = ./docs;
+            fileset = pkgs.lib.fileset.unions [
+              ./docs/mkdocs.yml
+              ./docs/src
+            ];
+          };
+          nativeBuildInputs = [ pkgs.python3Packages.mkdocs-material ];
+          # Build fully offline: Material for MkDocs bundles all of its assets,
+          # so no network access is required inside the Nix sandbox. --strict
+          # promotes broken links and unlisted pages to build failures.
+          buildPhase = ''
+            runHook preBuild
+            mkdocs build --strict --config-file mkdocs.yml --site-dir "$out"
+            runHook postBuild
+          '';
+          dontInstall = true;
+          meta = {
+            description = "Rendered MkDocs (Material) documentation for cl-parser-kit";
+            homepage = "https://github.com/nerima-lisp/cl-parser-kit";
+            license = pkgs.lib.licenses.mit;
+          };
+        };
     in
     {
       devShells = forAllSystems (pkgs: {
@@ -49,9 +78,11 @@
       formatter = forAllSystems (pkgs: pkgs.nixfmt);
 
       packages = forAllSystems (pkgs: {
+        docs = mkDocs pkgs;
+
         default = pkgs.stdenvNoCC.mkDerivation {
           pname = "cl-parser-kit";
-          version = "0.1.0";
+          version = "0.3.0";
           src = self;
           nativeBuildInputs = [ pkgs.sbcl ];
           buildPhase = ''

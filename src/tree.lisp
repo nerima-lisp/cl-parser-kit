@@ -8,21 +8,13 @@ trees.")
 (defparameter *maximum-tree-nodes* 1000000
   "Maximum AST/CST node count visited by one tree helper call.")
 
-(define-condition tree-depth-limit-exceeded (error)
-  ((depth :initarg :depth :reader tree-depth-limit-depth)
-   (limit :initarg :limit :reader tree-depth-limit-limit))
-  (:report (lambda (condition stream)
-             (format stream "Tree depth ~D exceeds maximum ~D"
-                     (tree-depth-limit-depth condition)
-                     (tree-depth-limit-limit condition)))))
+(define-value-limit-condition tree-depth-limit-exceeded depth
+    "Tree depth ~D exceeds maximum ~D"
+  :reader-prefix tree-depth-limit)
 
-(define-condition tree-node-limit-exceeded (error)
-  ((count :initarg :count :reader tree-node-limit-count)
-   (limit :initarg :limit :reader tree-node-limit-limit))
-  (:report (lambda (condition stream)
-             (format stream "Tree node count ~D exceeds maximum ~D"
-                     (tree-node-limit-count condition)
-                     (tree-node-limit-limit condition)))))
+(define-value-limit-condition tree-node-limit-exceeded count
+    "Tree node count ~D exceeds maximum ~D"
+  :reader-prefix tree-node-limit)
 
 (define-condition tree-child-list-invalid (error)
   ((kind :initarg :kind :reader tree-child-list-invalid-kind))

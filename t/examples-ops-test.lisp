@@ -18,8 +18,7 @@
   (assert-repository-files-do-not-match
    "scripts/*.lisp"
    (lambda (name)
-     (local-string-prefix-p "debug-" name))
-   "temporary debug scripts should not ship in the repository: ~S"))
+     (local-string-prefix-p "debug-" name))))
 
 (it-sequential "smoke-script-invokes-checked-in-verification-entrypoints-directly-test"
   (let ((script (repository-file-contents "scripts/run-implementation-smoke.sh")))
@@ -39,8 +38,7 @@
 	      (expect (search needle script) :to-be-truthy))
 	    (assert-string-lacks-any
 	     script
-	     '("driver_file=" "cat >\"$driver_file\"" "trap cleanup" "command_words")
-	     "Smoke script should no longer depend on temporary driver artifact ~S.")))
+	     '("driver_file=" "cat >\"$driver_file\"" "trap cleanup" "command_words"))))
 
 (it-sequential "release-audit-script-enforces-release-gate-contract-test"
   (let ((script (repository-file-contents "scripts/run-release-audit.sh")))

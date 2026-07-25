@@ -1,25 +1,41 @@
 (in-package :cl-parser-kit)
 
+(defun %clamp-fix-it-span (length fix-it)
+  "Clamp FIX-IT's span offsets to [0, LENGTH], so an out-of-range fix cannot
+error. Shared by every fix-application path, each of which clamps against a
+different notion of \"current length\" (the untouched source, or the
+shrinking/growing length left by prior fixes in a sequential pass)."
+  (let* ((span (fix-it-span fix-it))
+         (start (max 0 (min (span-start span) length)))
+         (end (max start (min (span-end span) length))))
+    (values start end)))
+
 (defun apply-fix-it (source fix-it)
   "Return SOURCE with the region covered by FIX-IT's span replaced by its
 replacement string (a NIL replacement deletes the region). Span offsets are
 clamped to SOURCE, so an out-of-range fix cannot error. The single-fix form of
 APPLY-FIXES -- turning a fix-it (structured suggestion data) into corrected text."
-  (let* ((span (fix-it-span fix-it))
-         (length (length source))
-         (start (max 0 (min (span-start span) length)))
-         (end (max start (min (span-end span) length))))
+  (multiple-value-bind (start end) (%clamp-fix-it-span (length source) fix-it)
     (concatenate 'string
                  (subseq source 0 start)
                  (or (fix-it-replacement fix-it) "")
                  (subseq source end))))
 
 (defun %fix-it-region (source fix-it)
-  (let* ((span (fix-it-span fix-it))
-         (length (length source))
-         (start (max 0 (min (span-start span) length)))
-         (end (max start (min (span-end span) length))))
+  (multiple-value-bind (start end) (%clamp-fix-it-span (length source) fix-it)
     (values start end (or (fix-it-replacement fix-it) ""))))
+
+(defun %fix-it-region-conflicts-p (start end previous-start previous-end)
+  "True when [START,END) overlaps the previous region [.., PREVIOUS-END), or
+shares PREVIOUS-START without both regions being the same zero-width
+insertion (same-position zero-width inserts are the one case two fixes are
+allowed to share a start: %DESCENDING-FIXES-BY-START-PRESERVING-EQUAL-ORDER
+then emits them in their original relative order)."
+  (or (< start previous-end)
+      (and previous-start
+           (= start previous-start)
+           (or (/= start end)
+               (/= previous-start previous-end)))))
 
 (defun %non-overlapping-fix-it-regions (source ordered-fixes)
   (let ((length (length source))
@@ -35,15 +51,11 @@ APPLY-FIXES -- turning a fix-it (structured suggestion data) into corrected text
                      (<= raw-end length))
           (return-from %non-overlapping-fix-it-regions nil)))
       (multiple-value-bind (start end replacement) (%fix-it-region source fix)
-        (when (or (< start previous-end)
-                  (and previous-start
-                       (= start previous-start)
-                         (or (/= start end)
-                             (/= previous-start previous-end))))
-            (return-from %non-overlapping-fix-it-regions nil))
-          (push (list start end replacement) regions)
-          (setf previous-start start
-                previous-end end)))))
+        (when (%fix-it-region-conflicts-p start end previous-start previous-end)
+          (return-from %non-overlapping-fix-it-regions nil))
+        (push (list start end replacement) regions)
+        (setf previous-start start
+              previous-end end)))))
 
 (defun %apply-non-overlapping-fixes (source regions)
   (with-output-to-string (out)
@@ -111,15 +123,13 @@ APPLY-FIXES -- turning a fix-it (structured suggestion data) into corrected text
   (let ((pieces (list (list :source source 0 (length source))))
         (current-length (length source)))
     (dolist (fix ordered-fixes (%pieces->string pieces))
-      (let* ((span (fix-it-span fix))
-             (replacement (or (fix-it-replacement fix) ""))
-             (start (max 0 (min (span-start span) current-length)))
-             (end (max start (min (span-end span) current-length))))
-        (setf pieces
-              (%replace-piece-range pieces start end replacement)
-              current-length
-              (+ (- current-length (- end start))
-                 (length replacement)))))))
+      (let ((replacement (or (fix-it-replacement fix) "")))
+        (multiple-value-bind (start end) (%clamp-fix-it-span current-length fix)
+          (setf pieces
+                (%replace-piece-range pieces start end replacement)
+                current-length
+                (+ (- current-length (- end start))
+                   (length replacement))))))))
 
 (defun %present-fixes (fixes)
   (let ((present '()))

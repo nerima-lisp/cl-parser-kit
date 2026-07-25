@@ -46,25 +46,27 @@
             0.0d0)))
       (values elapsed bytes throughput))))
 
+(defun %write-tsv-row (fields)
+  (loop for field in fields
+        for first-p = t then nil
+        unless first-p
+          do (write-char #\Tab)
+        do (princ field))
+  (terpri))
+
 (defun emit-benchmark-row (benchmark phase sample root size units iterations elapsed bytes throughput)
-  (let ((fields
-        (list
-          benchmark
-          phase
-          sample
-          (namestring root)
-          size
-          units
-          iterations
-          (format nil "~,9F" elapsed)
-          bytes
-          (format nil "~,3F" throughput))))
-    (loop for field in fields
-          for first-p = t then nil
-          unless first-p
-            do (write-char #\Tab)
-          do (princ field))
-    (terpri)))
+  (%write-tsv-row
+    (list
+      benchmark
+      phase
+      sample
+      (namestring root)
+      size
+      units
+      iterations
+      (format nil "~,9F" elapsed)
+      bytes
+      (format nil "~,3F" throughput))))
 
 (defun run-benchmark (name root size units iterations warmup samples thunk)
   (dotimes (iteration warmup)
@@ -222,7 +224,7 @@
          (parser-iterations (benchmark-getenv-integer "BENCH_PARSER_ITERATIONS" 100))
          (pratt-iterations (benchmark-getenv-integer "BENCH_PRATT_ITERATIONS" 40)))
     (load-benchmark-system root)
-    (loop for field in '("benchmark"
+    (%write-tsv-row '("benchmark"
         "phase"
         "sample"
         "root"
@@ -231,12 +233,7 @@
         "iterations"
         "elapsed_seconds"
         "consed_bytes"
-        "throughput_units_per_second")
-          for first-p = t then nil
-          unless first-p
-            do (write-char #\Tab)
-          do (princ field))
-    (terpri)
+        "throughput_units_per_second"))
     (multiple-value-bind (thunk units) (make-tokenizer-benchmark tokenizer-size)
       (run-benchmark
         "tokenizer"

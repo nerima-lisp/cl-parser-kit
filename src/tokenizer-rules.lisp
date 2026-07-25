@@ -21,6 +21,19 @@
   (let ((text (%string-range source index end)))
     (values t (- end index) text value)))
 
+(defmacro %skip-or-match (skip-p length &body non-skip-values-form)
+  "Every rule constructor's matcher (here and in TOKENIZER-RULES-TEXT.LISP /
+TOKENIZER-RULES-EXTRA.LISP) branches the same way once a candidate match's
+LENGTH is known: SKIP-P true reports the bare length, since a skipped match's
+TEXT/VALUE are never read (see %TOKENIZE-RULE-MATCH); otherwise
+NON-SKIP-VALUES-FORM runs to produce the full (VALUES T LENGTH TEXT VALUE). A
+macro, not a function, is required here -- passing NON-SKIP-VALUES-FORM as an
+ordinary argument would evaluate it (and its %STRING-RANGE / VALUE-FUNCTION
+work) even when SKIP-P is true, defeating the whole point."
+  `(if ,skip-p
+       (values t ,length nil nil)
+       (progn ,@non-skip-values-form)))
+
 (defun %scan-while (source index predicate)
   (declare (type string source) (type fixnum index) (optimize (speed 2) (safety 1)))
   (let ((length (length source)))
@@ -88,13 +101,11 @@ identifier character."
    (lambda (source index)
      (let ((end (%scan-while source index #'char-whitespace-p)))
        (when (> end index)
-         ;; The tokenizer never reads TEXT/VALUE for a skipped match
-         ;; (see %TOKENIZE-RULE-MATCH), so a skipped run of
-         ;; whitespace -- usually the bulk of the source -- avoids
-         ;; both the %STRING-RANGE and %TRIM-RANGE subseq copies.
-         (if skip-p
-             (values t (- end index) nil nil)
-             (%emit-token-match source index end (%trim-range source index end))))))))
+         ;; A skipped run of whitespace -- usually the bulk of the
+         ;; source -- avoids both the %STRING-RANGE and %TRIM-RANGE
+         ;; subseq copies; see %SKIP-OR-MATCH.
+         (%skip-or-match skip-p (- end index)
+           (%emit-token-match source index end (%trim-range source index end))))))))
 
 (defun %coerce-char-predicate (spec)
   "Coerce SPEC into a single-character predicate: a CHARACTER matches itself, a
@@ -117,10 +128,9 @@ not need MAKE-LITERAL-RULE's multi-character matching."
      (lambda (source index)
        (when (and (< index (length source))
                   (funcall predicate (char source index)))
-         (if skip-p
-             (values t 1 nil nil)
-             (let ((text (%string-range source index (1+ index))))
-               (values t 1 text (funcall value-function text)))))))))
+         (%skip-or-match skip-p 1
+           (let ((text (%string-range source index (1+ index))))
+             (values t 1 text (funcall value-function text)))))))))
 
 (defun make-predicate-rule (type predicate &key (min-length 1) skip-p (value-function #'identity))
   (check-type min-length (integer 1))
@@ -128,11 +138,10 @@ not need MAKE-LITERAL-RULE's multi-character matching."
    (lambda (source index)
      (let ((end (%scan-while source index predicate)))
        (when (>= (- end index) min-length)
-         (if skip-p
-             (values t (- end index) nil nil)
-             (%emit-token-match source index end
-                                (funcall value-function
-                                         (%string-range source index end)))))))))
+         (%skip-or-match skip-p (- end index)
+           (%emit-token-match source index end
+                              (funcall value-function
+                                       (%string-range source index end)))))))))
 
 (defun make-identifier-rule (&key (type :identifier)
                                   skip-p

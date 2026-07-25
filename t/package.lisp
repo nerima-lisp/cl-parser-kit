@@ -4,10 +4,15 @@
 
 (in-package :cl-parser-kit/test)
 
+(defun assert-string-contains-all (haystack snippets)
+  "Assert every snippet is a substring of HAYSTACK, reporting every miss at once."
+  (with-soft-assertions
+    (dolist (snippet snippets)
+      (expect (search snippet haystack) :to-be-truthy))))
+
 (defmacro assert-rendered-contains-all (form snippets)
   `(let ((rendered ,form))
-     (dolist (snippet ,snippets)
-       (expect (search snippet rendered) :to-be-truthy))
+     (assert-string-contains-all rendered ,snippets)
      rendered))
 
 (defmacro %assert-multiple-values (form (ok value next failure) &body assertions)

@@ -48,8 +48,7 @@ into separate tokens rather than building a multi-megabyte bignum."
                                                (+ digits-start
                                                   *maximum-number-lexeme-length*)))))
              (when (> end digits-start)
-               (if skip-p
-                   (values t (- end index) nil nil)
+               (%skip-or-match skip-p (- end index)
                    (values t (- end index)
                            (%string-range source index end)
                            (parse-integer source :start digits-start :end end
@@ -164,8 +163,7 @@ the value is produced by PARSE-INTEGER and bounded arithmetic, never the reader.
              (multiple-value-bind (has-exp-p exp-sign exp-start exp-end end)
                  (%scan-float-exponent-part source after-int limit-end)
                (when (or (not require-fractional) frac-start has-exp-p)
-                 (if skip-p
-                     (values t (- end index) nil nil)
+                 (%skip-or-match skip-p (- end index)
                      (values t (- end index)
                              (%string-range source index end)
                              (%float-lexeme-value source int-start int-end
@@ -202,6 +200,5 @@ Every token produced carries TYPE; distinguish operators by their TEXT."
                       (end (+ index operator-length)))
                  (when (and (<= end source-length)
                             (string= operator source :start2 index :end2 end))
-                   (return (if skip-p
-                               (values t operator-length nil nil)
+                   (return (%skip-or-match skip-p operator-length
                                (values t operator-length operator operator)))))))))))))

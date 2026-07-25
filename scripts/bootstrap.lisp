@@ -65,12 +65,22 @@
                   env-var
                   fallback-directory)))
 
-(defun load-test-dependency-asd-definitions (project-root)
+(defun %do-test-dependency-systems (project-root action)
+  "Call (FUNCALL ACTION asd-path system-name) once per SYSTEM-NAME in every
+*TEST-DEPENDENCY-SPECS* entry, after resolving that entry's ASD-PATH via
+LOCATE-DEPENDENCY-ASD. Shared by LOAD-TEST-DEPENDENCY-ASD-DEFINITIONS (ACTION
+is SYSTEM-SOURCE-FILES-FROM-ASD, run purely for its validation side effect --
+a malformed or missing defsystem form errors here, before anything tries to
+load it) and LOAD-TEST-DEPENDENCY-SOURCES (ACTION is LOAD-SYSTEM-SOURCE-FILES,
+which actually loads)."
   (dolist (spec *test-dependency-specs*)
     (destructuring-bind (env-var fallback-directory asd-name system-names) spec
       (let ((asd-path (locate-dependency-asd project-root env-var fallback-directory asd-name)))
         (dolist (system-name system-names)
-          (system-source-files-from-asd asd-path system-name))))))
+          (funcall action asd-path system-name))))))
+
+(defun load-test-dependency-asd-definitions (project-root)
+  (%do-test-dependency-systems project-root #'system-source-files-from-asd))
 
 (defun component-property (component key)
   (getf (cddr component) key))
@@ -173,11 +183,7 @@
           do (load (compile-file source-file :output-file output-file)))))
 
 (defun load-test-dependency-sources (project-root)
-  (dolist (spec *test-dependency-specs*)
-    (destructuring-bind (env-var fallback-directory asd-name system-names) spec
-      (let ((asd-path (locate-dependency-asd project-root env-var fallback-directory asd-name)))
-        (dolist (system-name system-names)
-          (load-system-source-files asd-path system-name))))))
+  (%do-test-dependency-systems project-root #'load-system-source-files))
 
 (defun load-project-asd-definitions (project-root &key (include-test-system-p t))
   (when include-test-system-p

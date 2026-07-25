@@ -7,6 +7,7 @@
                                                       *compile-file-pathname*)))))
 
 (let ((project-root (current-project-root))
+      (checks 0)
       (failures 0))
   (labels ((example-path (name)
              (merge-pathnames (concatenate 'string "examples/" name) project-root))
@@ -28,6 +29,7 @@
                     (concatenate 'string "FAIL " label ": " format-control "~%")
                     format-args))
            (check (label thunk)
+             (incf checks)
              (handler-case
                  (progn
                    (funcall thunk)
@@ -274,7 +276,7 @@
                               (getf (second (getf value :children)) :value))
                        "expected CST identifier value answer"))))
 
-    (format t "~&~D example checks, ~D failures~%" 21 failures)
+    (format t "~&~D example checks, ~D failures~%" checks failures)
     (when (> failures 0)
       #+sbcl (sb-ext:exit :code 1)
       #-sbcl (error "Example checks failed"))))

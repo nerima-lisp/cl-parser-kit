@@ -86,11 +86,8 @@ literally."
        (when (and (<= match-end source-length)
                   (string= prefix source :start2 index :end2 match-end))
          (let ((end (funcall end-fn source match-end)))
-           ;; Comments are almost always skipped; a skipped match's
-           ;; TEXT/VALUE are never read (see %TOKENIZE-RULE-MATCH),
-           ;; so skip the %STRING-RANGE copy and VALUE-FUNCTION call.
-           (if skip-p
-               (values t (- end index) nil nil)
+           ;; Comments are almost always skipped; see %SKIP-OR-MATCH.
+           (%skip-or-match skip-p (- end index)
                (%emit-token-match source index end
                                   (funcall value-function
                                            (%string-range source index end))))))))))

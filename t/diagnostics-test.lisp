@@ -227,40 +227,35 @@ shared by every DIAGNOSTIC-RELATED-COUNT-LIMIT-* test below."
     (expect (subseq fixed 0 12) :to-equal "a01234567890")
     (expect (subseq fixed (- (length fixed) 11)) :to-equal "0123456789b")))
 
+(defun %assert-apply-fixes-matches-sequential-fallback (source fixes)
+  "APPLY-FIXES's documented fallback for a set of FIXES it can't apply as one
+non-overlapping pass: reduce them one at a time, last-to-first by span start,
+over SOURCE. Shared by every test below that exercises that fallback path
+rather than the non-overlapping fast path."
+  (expect (apply-fixes source fixes)
+          :to-equal
+          (reduce (lambda (current fix) (apply-fix-it current fix))
+                  (stable-sort (copy-list fixes)
+                               #'>
+                               :key (lambda (fix) (span-start (fix-it-span fix))))
+                  :initial-value source)))
+
 (it-sequential "apply-fixes-preserves-overlapping-fallback-behavior-test"
   (let ((fixes (list (make-fix-it :span (make-span :start 0 :end 3) :replacement "X")
                      (make-fix-it :span (make-span :start 2 :end 4) :replacement "Y"))))
-    (expect (apply-fixes "abcd" fixes)
-            :to-equal
-            (reduce (lambda (current fix) (apply-fix-it current fix))
-                    (stable-sort (copy-list fixes)
-                                 #'>
-                                 :key (lambda (fix) (span-start (fix-it-span fix))))
-                    :initial-value "abcd"))))
+    (%assert-apply-fixes-matches-sequential-fallback "abcd" fixes)))
 
 (it-sequential "apply-fixes-preserves-same-start-overlapping-fallback-order-test"
   (let ((fixes (list (make-fix-it :span (make-span :start 0 :end 2) :replacement "X")
                      (make-fix-it :span (make-span :start 0 :end 1) :replacement "Y"))))
-    (expect (apply-fixes "abcd" fixes)
-            :to-equal
-            (reduce (lambda (current fix) (apply-fix-it current fix))
-                    (stable-sort (copy-list fixes)
-                                 #'>
-                                 :key (lambda (fix) (span-start (fix-it-span fix))))
-                    :initial-value "abcd"))))
+    (%assert-apply-fixes-matches-sequential-fallback "abcd" fixes)))
 
 (it-sequential "apply-fixes-preserves-out-of-range-fallback-behavior-test"
   (let ((fixes (list (make-fix-it :span (make-span :start 10 :end 14) :replacement "TT")
                      (make-fix-it :span (make-span :start 9 :end 16) :replacement "N")
                      (make-fix-it :span (make-span :start 10 :end 15) :replacement "U")
                      (make-fix-it :span (make-span :start 4 :end 8) :replacement "BB"))))
-    (expect (apply-fixes "sqjhbkqgg" fixes)
-            :to-equal
-            (reduce (lambda (current fix) (apply-fix-it current fix))
-                    (stable-sort (copy-list fixes)
-                                 #'>
-                                 :key (lambda (fix) (span-start (fix-it-span fix))))
-                    :initial-value "sqjhbkqgg"))))
+    (%assert-apply-fixes-matches-sequential-fallback "sqjhbkqgg" fixes)))
 
 (it-sequential "apply-fixes-preserves-negative-start-fallback-behavior-test"
   ;; A negative raw START on any fix (even alongside otherwise non-overlapping
@@ -285,15 +280,8 @@ shared by every DIAGNOSTIC-RELATED-COUNT-LIMIT-* test below."
          (fixes (loop for index below 1000
                       collect (make-fix-it :span (make-span :start index
                                                             :end (+ index 2))
-                                           :replacement "b")))
-         (fixed (apply-fixes source fixes)))
-    (expect fixed
-            :to-equal
-            (reduce (lambda (current fix) (apply-fix-it current fix))
-                    (stable-sort (copy-list fixes)
-                                 #'>
-                                 :key (lambda (fix) (span-start (fix-it-span fix))))
-                    :initial-value source))))
+                                           :replacement "b"))))
+    (%assert-apply-fixes-matches-sequential-fallback source fixes)))
 
 (it-sequential "apply-fixes-uses-diagnostic-fixes-test"
   (let* ((diagnostic (error-diagnostic "typo"

@@ -55,10 +55,8 @@
      (expect (mapcar ,projector ,value) :to-equal ,expected-values)))
 
 (defun %assert-rendered-diagnostic-contains (diagnostic &rest snippets)
-  (let ((rendered (and diagnostic (diagnostic->string diagnostic))))
-    (expect diagnostic :to-be-truthy)
-    (dolist (snippet snippets)
-      (expect (search snippet rendered) :to-be-truthy))))
+  (expect diagnostic :to-be-truthy)
+  (assert-string-contains-all (diagnostic->string diagnostic) snippets))
 
 (defun %assert-single-diagnostic (diagnostics &rest snippets)
   (expect diagnostics :to-have-length 1)

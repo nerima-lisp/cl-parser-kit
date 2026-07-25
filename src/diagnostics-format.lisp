@@ -44,12 +44,22 @@ batches terminate.")
 
 (defvar *diagnostic-source-line-start-cache* nil)
 
-(defun %compute-source-line-starts (source)
-  (let ((starts (list 0))
-        (index 0)
-        (length (length source)))
+(defun %walk-line-breaks (source on-break)
+  "Scan SOURCE for line breaks (LF, CRLF collapsed to one break, lone CR),
+calling (FUNCALL ON-BREAK break-start next-line-start) at each one --
+BREAK-START is the break character's own offset (the end of the line it
+terminates); NEXT-LINE-START is the offset just past it (where the following
+line begins -- BREAK-START+1, except after a CRLF pair). Stops as soon as
+ON-BREAK returns non-NIL, returning that value; otherwise scans to the end of
+SOURCE and returns NIL. Break handling mirrors ADVANCE-POSITION, so line
+numbering stays consistent with it. Shared by %COMPUTE-SOURCE-LINE-STARTS
+(collects every NEXT-LINE-START) and %SOURCE-LINE-AT's uncached fallback
+\(stops at one target line, using both offsets)."
+  (let ((length (length source))
+        (index 0))
     (loop while (< index length)
-          do (let ((char (char source index)))
+          do (let ((char (char source index))
+                   (break-start index))
                (cond
                  ((char= char #\Return)
                   (setf index
@@ -57,12 +67,22 @@ batches terminate.")
                                  (char= (char source (1+ index)) #\Newline))
                             (+ index 2)
                             (1+ index)))
-                  (push index starts))
+                  (let ((result (funcall on-break break-start index)))
+                    (when result (return-from %walk-line-breaks result))))
                  ((source-line-break-p char)
                   (incf index)
-                  (push index starts))
+                  (let ((result (funcall on-break break-start index)))
+                    (when result (return-from %walk-line-breaks result))))
                  (t
-                  (incf index)))))
+                  (incf index)))))))
+
+(defun %compute-source-line-starts (source)
+  (let ((starts (list 0)))
+    (%walk-line-breaks source
+                       (lambda (break-start next-line-start)
+                         (declare (ignore break-start))
+                         (push next-line-start starts)
+                         nil))
     (coerce (nreverse starts) 'vector)))
 
 (defun %source-line-starts (source)
@@ -106,33 +126,17 @@ batches terminate.")
           (return-from %source-line-at
             (%bounded-line-text-from-start source
                                            (aref starts (1- line-number)))))))
-    (block found
-      (let ((length (length source))
-            (current-line 1)
-            (start 0)
-            (index 0))
-        (loop while (< index length)
-              do (let ((char (char source index)))
-                   (cond
-                     ((char= char #\Return)
-                      (when (= current-line line-number)
-                        (return-from found (%bounded-line-text source start index)))
-                      (incf current-line)
-                      (if (and (< (1+ index) length)
-                               (char= (char source (1+ index)) #\Newline))
-                          (setf index (+ index 2))
-                          (setf index (1+ index)))
-                      (setf start index))
-                     ((source-line-break-p char)
-                      (when (= current-line line-number)
-                        (return-from found (%bounded-line-text source start index)))
-                      (incf current-line)
-                      (setf index (1+ index))
-                      (setf start index))
-                     (t
-                      (incf index)))))
-        (when (= current-line line-number)
-          (%bounded-line-text source start length))))))
+    (let ((start 0)
+          (current-line 1))
+      (or (%walk-line-breaks source
+                             (lambda (break-start next-line-start)
+                               (prog1
+                                   (when (= current-line line-number)
+                                     (%bounded-line-text source start break-start))
+                                 (incf current-line)
+                                 (setf start next-line-start))))
+          (when (= current-line line-number)
+            (%bounded-line-text source start (length source)))))))
 
 (defun %caret-padding (start-column)
   ;; The source line and caret line share the same "  | " gutter, so a 1-based

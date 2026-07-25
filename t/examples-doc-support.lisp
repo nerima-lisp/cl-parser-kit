@@ -67,13 +67,13 @@
   (let* ((fragment-start (position #\# target))
          (path (if fragment-start
                    (subseq target 0 fragment-start)
-                   target)))
-    (merge-pathnames path (doc-file-path doc-name))))
+                   target))
+         (doc-directory (make-pathname :name nil :type nil
+                                       :defaults (doc-file-path doc-name))))
+    (merge-pathnames path doc-directory)))
 
 (defun assert-document-contains-all (doc-name snippets)
-  (let ((contents (doc-file-contents doc-name)))
-    (dolist (snippet snippets)
-      (expect (string-contains-p snippet contents) :to-be-truthy))))
+  (assert-string-contains-all (doc-file-contents doc-name) snippets))
 
 (defmacro register-document-snippet-test (name document snippets)
   `(it-sequential ,(string-downcase (string name))

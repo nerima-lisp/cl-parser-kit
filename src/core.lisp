@@ -34,6 +34,27 @@ only things that differ between boundaries."
                           (,limit-reader condition))))
        ,@(when documentation `((:documentation ,documentation))))))
 
+(defmacro define-value-limit-condition (name value-slot report-control-string
+                                         &key (reader-prefix name))
+  "Define NAME as an ERROR condition carrying VALUE-SLOT and :LIMIT initargs
+with matching READER-PREFIX-VALUE-SLOT / READER-PREFIX-LIMIT readers (READER-PREFIX
+defaults to NAME; override it to keep a public reader name shorter than the
+condition's own, as TREE-DEPTH-LIMIT-EXCEEDED does), whose report calls
+(FORMAT STREAM REPORT-CONTROL-STRING value limit).
+
+The single-limit sibling of DEFINE-RESOURCE-LIMIT-CONDITION above: use this
+for a boundary with exactly one limit kind, so no :KIND discriminator or
+report argument is needed."
+  (let ((value-reader (%resource-limit-reader-symbol reader-prefix value-slot))
+        (limit-reader (%resource-limit-reader-symbol reader-prefix 'limit)))
+    `(define-condition ,name (error)
+       ((,value-slot :initarg ,(intern (symbol-name value-slot) :keyword) :reader ,value-reader)
+        (limit :initarg :limit :reader ,limit-reader))
+       (:report (lambda (condition stream)
+                  (format stream ,report-control-string
+                          (,value-reader condition)
+                          (,limit-reader condition)))))))
+
 (defun %walk-bounded-list (list limit on-limit-exceeded item-fn)
   "Call (FUNCALL ITEM-FN item) for each item in LIST in order, bounding the
 walk against a hostile LIST the same way everywhere in this library: a
@@ -64,20 +85,29 @@ condition ON-LIMIT-EXCEEDED signals."
            (unless (null tail)
              (funcall on-limit-exceeded (1+ limit)))))
 
+(defmacro %do-proper-list ((cursor thing) &body body)
+  "Walk THING cons by cons, binding CURSOR to the current cons cell and
+running BODY once per element -- BODY may (RETURN value) to stop early, since
+it expands inside the walk's own LOOP and shares its implicit NIL block. An
+improper tail or a repeated (EQ) cons signals immediately. Factors out the
+cycle/properness check %CHECK-PROPER-ACYCLIC-LIST and ENSURE-VECTOR-UP-TO's
+LIST clause each used to duplicate, down to the identical error messages."
+  `(loop with seen = (make-hash-table :test 'eq)
+         with ,cursor = ,thing
+         do (cond
+              ((null ,cursor) (return))
+              ((not (consp ,cursor))
+               (error "Expected a proper list, got improper tail ~S." ,cursor))
+              ((gethash ,cursor seen)
+               (error "Expected a proper acyclic list, got circular list."))
+              (t
+               (setf (gethash ,cursor seen) t)
+               ,@body
+               (setf ,cursor (cdr ,cursor))))))
+
 (defun %check-proper-acyclic-list (thing)
-  (let ((seen (make-hash-table :test 'eq))
-        (cursor thing))
-    (loop
-      (cond
-        ((null cursor)
-         (return thing))
-        ((not (consp cursor))
-         (error "Expected a proper list, got improper tail ~S." cursor))
-        ((gethash cursor seen)
-         (error "Expected a proper acyclic list, got circular list."))
-        (t
-         (setf (gethash cursor seen) t
-               cursor (cdr cursor)))))))
+  (%do-proper-list (cursor thing))
+  thing)
 
 (defun ensure-list (thing)
   (if (listp thing)
@@ -103,24 +133,13 @@ it for intentionally large parser inputs.")
            (values thing length nil))))
     (list
      (let ((stream (make-array 0 :adjustable t :fill-pointer 0))
-           (seen (make-hash-table :test 'eq))
-           (count 0)
-           (cursor thing))
-       (loop
-         (cond
-           ((null cursor)
-            (return (values stream count nil)))
-           ((not (consp cursor))
-            (error "Expected a proper list, got improper tail ~S." cursor))
-           ((gethash cursor seen)
-            (error "Expected a proper acyclic list, got circular list."))
-           (t
-            (setf (gethash cursor seen) t)
-            (incf count)
-            (when (> count maximum-length)
-              (return (values nil count t)))
-            (vector-push-extend (car cursor) stream)
-            (setf cursor (cdr cursor)))))))))
+           (count 0))
+       (%do-proper-list (cursor thing)
+         (incf count)
+         (when (> count maximum-length)
+           (return-from ensure-vector-up-to (values nil count t)))
+         (vector-push-extend (car cursor) stream))
+       (values stream count nil)))))
 
 (defun ensure-vector (thing)
   (multiple-value-bind (stream count too-many-p)

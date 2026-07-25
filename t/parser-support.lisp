@@ -39,9 +39,6 @@
   `(%assert-failure-values ,form (,value ,next ,failure)
      ,@assertions))
 
-(defun %assert-parser-diagnostic-span (diagnostic start-line start-column end-line end-column)
-  (%assert-diagnostic-span diagnostic start-line start-column end-line end-column))
-
 (defun %assert-trailing-token-diagnostic (failure source location-snippet caret-snippet)
   (let* ((diagnostic (first (parse-failure-diagnostics failure)))
          (rendered (diagnostic->string diagnostic)))

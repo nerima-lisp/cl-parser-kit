@@ -69,6 +69,6 @@
       (expect next :to-equal 1)
       (let* ((diagnostic (first (parse-failure-diagnostics failure)))
              (rendered (diagnostic->string diagnostic)))
-        (%assert-parser-diagnostic-span diagnostic 2 1 2 2)
+        (%assert-diagnostic-span diagnostic 2 1 2 2)
         (expect (search "2:1-2:2" rendered) :to-be-truthy)
         (expect (search "  | +" rendered) :to-be-truthy)))))

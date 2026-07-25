@@ -42,16 +42,12 @@
 (defun string-contains-p (needle string)
   (not (null (search needle string))))
 
-(defun assert-string-contains-all (string snippets)
-  (dolist (snippet snippets)
-    (expect (string-contains-p snippet string) :to-be-truthy)))
+(defun assert-string-lacks-any (string snippets)
+  (with-soft-assertions
+    (dolist (snippet snippets)
+      (expect (string-contains-p snippet string) :to-be-falsy))))
 
-(defun assert-string-lacks-any (string snippets message)
-  (dolist (snippet snippets)
-    (expect (string-contains-p snippet string) :to-be-falsy)))
-
-(defmacro assert-repository-files-do-not-match (pattern predicate &optional
-                                                   (message "Unexpected repository file ~S"))
+(defmacro assert-repository-files-do-not-match (pattern predicate)
   `(dolist (name (repository-file-names ,pattern))
      (expect (funcall ,predicate name) :to-be-falsy)))
 
