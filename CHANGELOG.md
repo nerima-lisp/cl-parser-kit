@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- fixed two broken GitHub Actions pins in `.github/workflows/ci.yml` (the primary CI gate):
+  `cachix/install-nix-action` and `cachix/cachix-action` were pinned to commit SHAs that no
+  longer exist in either action's repository (confirmed via each repo's git commit-object API
+  returning 404, not just "stale" -- these commits are gone, likely removed by an upstream
+  history rewrite), meaning CI could fail unpredictably on a cold run with no local code change
+  at all. Repinned both to the same known-good, currently-latest release commits already used
+  in `.github/workflows/docs.yml` (`v31`/`v17`), and added the matching `# vN` comment
+  `docs.yml` already carried but `ci.yml` never had. Verified every pin in both workflow files
+  (7 total) resolves to a real commit via each action repo's git API, not just the two that were
+  broken
+- added `.github/dependabot.yml` (GitHub Actions ecosystem only, weekly, matching the
+  sibling `cl-weave` repo's convention) so pins like the ones above get bumped automatically
+  going forward instead of silently rotting
 - pinned the `paredit-cli` flake input to `v0.8.0` (`flake.nix` previously floated its
   default branch with no version pin, unlike `cl-weave`/`cl-prolog`'s explicit tag pins) --
   the locked commit was 17 commits behind the current release, missing the entire `inspect
