@@ -2,6 +2,39 @@
 
 ## Unreleased
 
+## 0.4.0 - 2026-07-25
+
+- added `left-recursion-detected` — `memoize` now signals it instead of
+  looping until the generic recursion-depth guard trips, giving a precise
+  diagnostic for a packrat-memoization misuse; `left-recursion-detected-parser`
+  / `left-recursion-detected-position` read the offending parser and position
+- added `sep-by-between` / `sep-by-at-least` / `sep-by-at-most` for
+  separated-list parsing with explicit min/max repetition bounds
+- added `:case-sensitive` to `make-literal-rule` for case-insensitive
+  keyword/literal tokenizing
+- added `trace-parser`, a pass-through debugging combinator that logs each
+  wrapped parser's outcome to `*trace-output*` (megaparsec's `dbg`)
+- fixed `trace-parser`'s `:stream` default, which was evaluated once and
+  closed over permanently instead of re-reading `*trace-output*` on every
+  parse, contradicting its own documented rebinding behavior
+- fixed `sep-by-at-least` not validating `min` against
+  `*maximum-parser-repetition-count*`, unlike every sibling
+  bounded-repetition combinator
+- fixed a latent bug in the doc-support tooling (`t/examples-doc-support.lisp`)
+  where `merge-pathnames` silently inherited README.md's `.md` type onto
+  extension-less link targets like `LICENSE`, resolving to a nonexistent
+  `LICENSE.md`
+- broad internal performance pass: rewrote six self-recursive CPS combinator
+  loops (`many`, `skip-many`, `fold-many`, `many-till`, `times-between`,
+  `sep-by`/`chainl1`) as plain iteration, removed wasted hash-table
+  allocations on empty-list fast paths, added an early return for
+  `apply-fixes` with no fixes to apply, stack-allocated the `&rest` argument
+  lists of `%merge-diagnostics` and `merge-parse-failures`, deduplicated
+  tokenizer text/value computation for same-range token rules, and declared
+  a global `(speed 3) (safety 1)` optimize policy; no public behavior change,
+  measured throughput/consing improvements are in the individual commits
+- bumped `cl-weave` 0.10.0 -> 0.11.0 and `cl-prolog` 0.7.0 -> 0.8.0 (both
+  additive releases)
 - added a full MkDocs (Material) documentation site under `docs/`, published
   to GitHub Pages at <https://nerima-lisp.github.io/cl-parser-kit/> via
   `.github/workflows/docs.yml` and buildable offline with `nix build .#docs`;
