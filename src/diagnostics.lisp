@@ -167,6 +167,14 @@ failures. Rebind or SETF to raise it for intentionally broad recovery reports.")
              (parse-failure-committed-p right)))))))
 
 (defun merge-parse-failures (&rest failures)
+  ;; FAILURES never escapes -- only walked by the LOOP below, and
+  ;; %MERGE-PARSE-FAILURE-PAIR receives individual PARSE-FAILURE elements,
+  ;; never this REST list itself -- so, like %MERGE-DIAGNOSTICS
+  ;; (combinators.lisp), a safe DYNAMIC-EXTENT case: called on every failed
+  ;; ALT/CHOICE branch and inside MANY-TILL/PERMUTE's own failure paths, all
+  ;; genuinely hot, always with exactly 2 arguments in this library's own
+  ;; call sites.
+  (declare (dynamic-extent failures))
   (loop with merged-failure = nil
         for failure in failures
         when failure
