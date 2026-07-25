@@ -15,8 +15,8 @@ That command resolves the pinned test dependencies, runs the full `cl-weave`
 suite including the `cl-prolog/weave` contract checks, produces coverage
 artifacts, and checks Lisp structure.
 
-The checked flake systems are `x86_64-linux` and `aarch64-linux`. The hosted CI
-baseline is Linux on `ubuntu-latest`. CI optionally pulls from the cache named by the
+The checked flake systems are `x86_64-linux`, `aarch64-linux`, and `aarch64-darwin`. The
+hosted CI baseline is Linux on `ubuntu-latest`. CI optionally pulls from the cache named by the
 `CACHIX_CACHE` repository variable and pushes only when the
 `CACHIX_AUTH_TOKEN` secret is configured. The project cache is not required to
 run the checks.
@@ -57,7 +57,8 @@ available through:
 
 - support claims should be backed by executable tests or documented examples
 - the checked-in SBCL baseline is the primary regression target
-- Linux is the current Nix and hosted CI platform boundary
+- Linux and `aarch64-darwin` are the current Nix platform boundary; Linux
+  (`ubuntu-latest`) is the hosted CI boundary
 - `./scripts/run-implementation-smoke.sh` is available for broader portability
   checks when needed
 - portability across other Common Lisp implementations remains a design goal,

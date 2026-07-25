@@ -138,7 +138,8 @@ at the repository root packages `cl-parser-kit` as a Nix flake:
   S-expression lint checks.
 - `nix flake check` — the full reproducible CI gate: the library package
   build, the `cl-weave`/`cl-prolog` test suite, the 90%/80% coverage gate,
-  and `paredit-lint`, for `x86_64-linux` and `aarch64-linux`.
+  and `paredit-lint`, for `x86_64-linux`, `aarch64-linux`, and
+  `aarch64-darwin`.
 - `nix build .#docs` — builds this documentation site with MkDocs (Material)
   in `--strict` mode, so broken links fail the build.
 - `nix fmt` — formats `flake.nix` with `nixfmt`.

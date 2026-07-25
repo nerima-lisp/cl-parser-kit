@@ -37,8 +37,8 @@ shape.
 ## Working Style
 
 - use `nix flake check` to run the full reproducible gate (compile check,
-  tests, coverage, and lint) the same way CI does, on `x86_64-linux` or
-  `aarch64-linux`
+  tests, coverage, and lint) the same way CI does, on `x86_64-linux`,
+  `aarch64-linux`, or `aarch64-darwin`
 - use `nix develop --command sbcl --script scripts/run-tests.lisp` to rerun
   only the test suite with its pinned `cl-weave` and `cl-prolog` dependencies
 - use `sbcl --script scripts/run-compile-check.lisp` when a change could

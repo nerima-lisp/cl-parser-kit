@@ -29,6 +29,7 @@
       systems = [
         "x86_64-linux"
         "aarch64-linux"
+        "aarch64-darwin"
       ];
       forAllSystems =
         function: nixpkgs.lib.genAttrs systems (system: function (import nixpkgs { inherit system; }));
@@ -101,7 +102,7 @@
             description = "Small parser toolkit for Common Lisp text languages";
             homepage = "https://github.com/nerima-lisp/cl-parser-kit";
             license = pkgs.lib.licenses.mit;
-            platforms = pkgs.lib.platforms.linux;
+            platforms = systems;
           };
         };
       });

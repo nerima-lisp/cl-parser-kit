@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- added `aarch64-darwin` to the flake's supported `systems`, and fixed `default` package's
+  `meta.platforms` (previously hardcoded to `pkgs.lib.platforms.linux`, which -- unlike
+  `systems` -- is actually enforced by nixpkgs' `check-meta.nix` and blocks a build outright,
+  not just informational) to derive from `systems` instead of drifting from it. The Linux-only
+  restriction was self-imposed, not inherited from any input: `cl-weave`, `cl-prolog`, and
+  `paredit-cli` all already build for `aarch64-darwin` (`cl-prolog` v1.0.0 added it this same
+  day, verified locally end to end per its own changelog). Verified here the same way, not
+  just changed and assumed: `nix build .#default`, `nix flake check` (package + test 624/624
+  via the native Nix-resolved dependency path, not manual env-var overrides + coverage +
+  `paredit-lint`, 135 files/0 errors), `nix build .#docs`, and `nix develop` all succeed on
+  this exact machine -- the one every local verification command this entire session has had
+  to route around via manual `sbcl`/`paredit` invocations specifically because this didn't work
 - bumped the `cl-prolog` test dependency 0.8.0 -> 1.0.0 (cl-prolog's first stable release,
   fixing numerous ISO 13211-1 conformance defects -- most described as behavior changes: atom
   text/case identity, operator-as-term parsing, arithmetic operator semantics, stream/IO error

@@ -62,8 +62,7 @@ these.
 
 ## Verification
 
-From a repository checkout on a supported Linux system, run the full suite
-with:
+From a repository checkout on a supported system, run the full suite with:
 
 ```sh
 nix flake check
@@ -73,8 +72,9 @@ This resolves the pinned `cl-weave` and `cl-prolog` test dependencies, runs
 the full suite, generates the coverage report, and checks Lisp structure
 with `paredit-cli`.
 
-The flake exposes checks for `x86_64-linux` and `aarch64-linux`. GitHub
-Actions runs the `x86_64-linux` baseline on `ubuntu-latest`. CI optionally
+The flake exposes checks for `x86_64-linux`, `aarch64-linux`, and
+`aarch64-darwin`. GitHub Actions runs the `x86_64-linux` baseline on
+`ubuntu-latest`. CI optionally
 pulls from the Cachix cache named by the `CACHIX_CACHE` repository variable,
 and enables pushes only when the `CACHIX_AUTH_TOKEN` secret is also
 configured; the checks still run without a configured cache.
