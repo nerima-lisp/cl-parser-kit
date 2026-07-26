@@ -67,7 +67,7 @@ never matches. See ATTEMPT for disambiguating elements with overlapping starts."
                                    (declare (ignore failed-next))
                                    (if (parse-failure-committed-p result)
                                        (%committed-failure-from result)
-                                       (try-candidates current remaining-count (1+ index)
-                                                       diagnostics
-                                                       (merge-parse-failures best-failure result)))))))))
+                                       (try-candidates
+                                        current remaining-count (1+ index) diagnostics
+                                        (merge-parse-failures best-failure result)))))))))
                (next-round position count '())))))))

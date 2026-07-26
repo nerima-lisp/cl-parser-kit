@@ -85,12 +85,14 @@ which *MAXIMUM-*-RECURSION-DEPTH* special they report."
           *maximum-parser-tokens*)))))
 
 (defun %ensure-parser-token-vector (tokens &optional (position 0))
-  (multiple-value-bind (stream token-count too-many-p) (ensure-vector-up-to tokens *maximum-parser-tokens*)
+  (multiple-value-bind (stream token-count too-many-p)
+      (ensure-vector-up-to tokens *maximum-parser-tokens*)
     (if too-many-p (values nil (%parser-token-limit-failure token-count position))
       (values stream nil))))
 
 (defun %run-parser-on-token-vector (parser input position)
-  (if (>= *parser-recursion-depth* *maximum-parser-recursion-depth*) (values nil nil position (%recursion-depth-exceeded-failure position))
+  (if (>= *parser-recursion-depth* *maximum-parser-recursion-depth*)
+      (values nil nil position (%recursion-depth-exceeded-failure position))
     (let ((*parser-recursion-depth* (1+ *parser-recursion-depth*)))
       (funcall (parser-fn parser) input position))))
 
@@ -234,7 +236,8 @@ failure. Reach for MAP-PARSER when only the value needs transforming."
     input
     position
     (lambda (value next result)
-      (multiple-value-bind (next-ok next-value next-position next-result) (%run-parser-on-token-vector (funcall function value) input next)
+      (multiple-value-bind (next-ok next-value next-position next-result)
+          (%run-parser-on-token-vector (funcall function value) input next)
         (if next-ok (%success next-value next-position (%merge-diagnostics result next-result))
           (if (= next position) (%failure-from next-result)
             (%committed-failure-from next-result)))))))
@@ -350,7 +353,8 @@ turns the token into the operation it denotes."
       (map
         nil
         (lambda (parser)
-          (multiple-value-bind (ok value next result) (%run-parser-on-token-vector parser input current)
+          (multiple-value-bind (ok value next result)
+              (%run-parser-on-token-vector parser input current)
             (unless ok
               (setf best-failure (merge-parse-failures best-failure result))
               (return-from
@@ -369,7 +373,8 @@ turns the token into the operation it denotes."
       (map
         nil
         (lambda (parser)
-          (multiple-value-bind (ok value next result) (%run-parser-on-token-vector parser input position)
+          (multiple-value-bind (ok value next result)
+              (%run-parser-on-token-vector parser input position)
             (if ok (return-from alt (%success value next result))
               (setf best-failure (merge-parse-failures best-failure result)))))
         parsers)
