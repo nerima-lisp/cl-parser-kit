@@ -1,6 +1,6 @@
-(defpackage :cl-parser-kit/test
-  (:use :cl :cl-parser-kit :cl-weave)
-  (:shadowing-import-from :cl-weave #:describe))
+(defpackage #:cl-parser-kit/test
+  (:use #:cl #:cl-parser-kit #:cl-weave)
+  (:shadowing-import-from #:cl-weave #:describe))
 
 (in-package :cl-parser-kit/test)
 

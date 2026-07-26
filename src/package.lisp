@@ -1,5 +1,5 @@
-(defpackage :cl-parser-kit
-  (:use :cl)
+(defpackage #:cl-parser-kit
+  (:use #:cl)
   (:export
    ;; spans
    #:span
