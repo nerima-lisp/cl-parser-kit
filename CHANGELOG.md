@@ -20,6 +20,16 @@ release publish an empty body and fail. Keep `## [Unreleased]` at the top.
 
 ### Changed
 
+- the shared test fixtures and support code in `t/` now carry the `helpers-`
+  prefix the org coding standard reserves for them, so that every remaining
+  `t/*.lisp` file is either a `-test.lisp` suite or a declared manifest:
+  `combinators-support.lisp` became `helpers-combinators.lisp`,
+  `combinators-fixtures.lisp` became `helpers-combinators-fixtures.lisp`, and
+  the `tokenizer-`, `pratt-`, `parser-` and `examples-` support files moved the
+  same way. Load order in `cl-parser-kit.asd` is unchanged; no test changed
+- `defpackage` in `src/package.lisp` and `t/package.lisp` names packages with
+  `#:` designators instead of keywords, matching the `:export` lists that were
+  already written that way
 - the test system is now `cl-parser-kit/test`, defined in `cl-parser-kit.asd`
   alongside the runtime system. `cl-parser-kit-test.asd` and the
   `cl-parser-kit-test` system name are gone. Consumers running the suite via

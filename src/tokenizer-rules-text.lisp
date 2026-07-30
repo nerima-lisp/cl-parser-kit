@@ -90,7 +90,8 @@ literally."
            (%skip-or-match skip-p (- end index)
                (%emit-scanned-token-match source index end value-function))))))))
 
-(defun make-line-comment-rule (&key (type :comment) (prefix ";") (skip-p t) (value-function #'identity))
+(defun make-line-comment-rule (&key (type :comment) (prefix ";") (skip-p t)
+                                    (value-function #'identity))
   "Build a TOKEN-RULE matching a comment that starts at PREFIX and runs to the end
 of the line (or the end of the source) as a token of TYPE.
 

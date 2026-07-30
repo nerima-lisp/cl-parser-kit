@@ -172,7 +172,9 @@ matching rule, or (values nil ...) when none match."
                    (incf token-count)
                    (when (> token-count *maximum-tokenizer-tokens*)
                      (error 'tokenizer-resource-limit-exceeded
-                            :kind :token-count :value token-count :limit *maximum-tokenizer-tokens*))))
+                            :kind :token-count
+                            :value token-count
+                            :limit *maximum-tokenizer-tokens*))))
             finally (return (coerce (nreverse tokens) 'vector))))))
 
 (defun tokenize-string (source tokenizer)

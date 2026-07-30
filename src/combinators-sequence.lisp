@@ -167,7 +167,8 @@ defaulting instead of failing on zero operands.")
                                      (%run-progressing-parser/cps
                                       operator input next
                                       (lambda (operator-value operator-next operator-result)
-                                        (multiple-value-bind (right-ok right-value right-next right-result)
+                                        (multiple-value-bind (right-ok right-value
+                                                             right-next right-result)
                                             (parse-chain operator-next)
                                           (if right-ok
                                               (%success (funcall operator-value value right-value)
@@ -258,7 +259,8 @@ since the loop no longer delegates to that shared function."
   :allow-empty-p t
   :final-item-failure-recoverable-p t)
 
-(defun %run-bounded-separated-items (parser separator input current values diagnostics count min max)
+(defun %run-bounded-separated-items (parser separator input current values diagnostics
+                                     count min max)
   "Continue a SEP-BY-style match (mandatory SEPARATOR before every further ITEM,
 a SEPARATOR failure always recoverable, an ITEM failure after a matched SEPARATOR
 always committed) that has already collected COUNT items ending at CURRENT.
