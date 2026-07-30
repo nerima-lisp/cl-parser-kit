@@ -18,6 +18,8 @@ release publish an empty body and fail. Keep `## [Unreleased]` at the top.
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-07-31
+
 ### Fixed
 
 - `parse-pratt` dropped its caller-supplied `:position` on the token-limit
