@@ -35,9 +35,7 @@ time."
                         diagnostics (%merge-diagnostics diagnostics result)))
                 (lambda (failure)
                   (return-from done
-                    (if (= current position)
-                        (%failure-from failure)
-                        (%committed-failure-from failure))))))
+                    (%failure-committed-if-consumed failure current position)))))
       (%success (nreverse results) current diagnostics))))
 
 (defun times (count parser)
@@ -160,9 +158,7 @@ not silently backtrack past a partially-parsed run."
                                     (if item-ok
                                         (%progress-failure-object current parser)
                                         item-result))))
-                       (return (if (= current position)
-                                   (%failure-from merged)
-                                   (%committed-failure-from merged))))))))))))
+                       (return (%failure-committed-if-consumed merged current position)))))))))))
 
 (defun fold-many1 (function initial parser)
   "Like FOLD-MANY but requires PARSER to match at least once.
@@ -275,9 +271,8 @@ failure always propagates. MIN and MAX are non-negative integers with MIN <= MAX
                            (if (>= count min)
                                (%recoverable-success (nreverse values)
                                                      current diagnostics failure)
-                               (if (= current position)
-                                   (%failure-from failure)
-                                   (%committed-failure-from failure))))))))))))
+                               (%failure-committed-if-consumed
+                                failure current position)))))))))))
 
 (defun at-least (min parser)
   "Parse PARSER at least MIN times with no upper bound, returning the list of

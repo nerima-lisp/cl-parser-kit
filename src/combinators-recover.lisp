@@ -45,8 +45,7 @@ the loop terminates on end of input instead of tripping MANY's non-advancing
 guard when RECOVERY has nothing left to skip."
   (%run-parser/if-success
    parser input position
-   (lambda (value next result)
-     (%success value next result))
+   #'%success
    (lambda (failure failed-next)
      (declare (ignore failed-next))
      (let ((resume (max position (parse-failure-position failure))))

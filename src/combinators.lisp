@@ -159,6 +159,21 @@ control stack or the heap on adversarial input."
     (parse-failure-position failure)
     (%copy-parse-failure failure :committed-p t)))
 
+(defun %failure-committed-if-consumed (failure current start)
+  "Return FAILURE as a committed failure when input was consumed between START
+and CURRENT, and as a plain backtrackable one when it was not -- SEQ's
+commitment rule, which BIND-PARSER, %RUN-PARSER-SEQUENCE, %RUN-FIXED-REPETITION,
+MANY-TILL and TIMES-BETWEEN each state in prose and used to re-derive inline.
+
+Committing once a branch has consumed input is what makes ALT report the
+specific error from inside the intended alternative instead of a generic \"no
+alternative matched\": a branch that failed without moving is still ambiguous
+and may be backtracked over, whereas one that failed midway had clearly been
+selected. Only failure paths reach here, so naming the rule costs nothing a
+parse actually pays for."
+  (if (= current start) (%failure-from failure)
+    (%committed-failure-from failure)))
+
 (defun %progress-failure-object (position parser)
   (%make-parse-failure position :progressing-parser parser nil nil))
 
@@ -239,8 +254,7 @@ failure. Reach for MAP-PARSER when only the value needs transforming."
       (multiple-value-bind (next-ok next-value next-position next-result)
           (%run-parser-on-token-vector (funcall function value) input next)
         (if next-ok (%success next-value next-position (%merge-diagnostics result next-result))
-          (if (= next position) (%failure-from next-result)
-            (%committed-failure-from next-result)))))))
+          (%failure-committed-if-consumed next-result next position))))))
 
 (define-parser-function
   satisfies-token
@@ -359,8 +373,7 @@ turns the token into the operation it denotes."
               (setf best-failure (merge-parse-failures best-failure result))
               (return-from
                 seq
-                (if (= current position) (%failure-from best-failure)
-                  (%committed-failure-from best-failure))))
+                (%failure-committed-if-consumed best-failure current position)))
             (push value values)
             (setf diagnostics (%merge-diagnostics diagnostics result))
             (setf current next)))

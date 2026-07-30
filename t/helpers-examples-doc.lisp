@@ -32,37 +32,6 @@
                (setf position (1+ end)))
           finally (return (nreverse identifiers)))))
 
-(defun markdown-heading-prefix-p (line)
-  (or (local-string-prefix-p "## " line)
-      (local-string-prefix-p "### " line)))
-
-(defun markdown-section-contents (name heading)
-  (with-input-from-string (stream (doc-file-contents name))
-    (with-output-to-string (output)
-      (loop with in-section = nil
-            for line = (read-line stream nil nil)
-            while line
-            do (cond
-                 ((string= line heading)
-                  (setf in-section t))
-                 ((and in-section
-                       (markdown-heading-prefix-p line))
-                  (return))
-                 (in-section
-                  (write-line line output)))))))
-
-(defun markdown-bullet-code-items (name heading)
-  (let ((contents (markdown-section-contents name heading))
-        (items '()))
-    (with-input-from-string (stream contents)
-      (loop for line = (read-line stream nil nil)
-            while line
-            do (when (local-string-prefix-p "- `" line)
-                 (let ((end (position #\` line :start 3)))
-                   (when end
-                     (push (subseq line 3 end) items))))))
-    (nreverse items)))
-
 (defun markdown-link-pathname (doc-name target)
   (let* ((fragment-start (position #\# target))
          (path (if fragment-start

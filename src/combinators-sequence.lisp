@@ -33,7 +33,7 @@ the CPS house style everywhere else in this file."
 (defun %run-parser-or-recoverable (parser input position fallback-value)
   (%run-parser/if-success
    parser input position
-   (lambda (value next result) (%success value next result))
+   #'%success
    (lambda (result failed-next)
      (declare (ignore failed-next))
      (%recoverable-success fallback-value position nil result))))

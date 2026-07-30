@@ -27,8 +27,7 @@ all-or-nothing inside an optional context, e.g.
 recovers cleanly when only `else` (but not `else if`) is present."
   (%run-parser/if-success
    parser input position
-   (lambda (value next result)
-     (%success value next result))
+   #'%success
    (lambda (failure next)
      (declare (ignore next))
      ;; Backtrack the consumption: return NEXT = POSITION (where ATTEMPT began)

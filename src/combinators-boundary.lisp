@@ -36,8 +36,7 @@ all pass through. Use CONTEXT instead when the internal detail should be kept
 and merely annotated."
   (%run-parser/if-success
    parser input position
-   (lambda (value next result)
-     (%success value next result))
+   #'%success
    (lambda (result next)
      (values nil nil
              next
@@ -53,8 +52,7 @@ actual, and commitment untouched and only adds explanatory context such as
 failure and rendered by `parse-failure->string`."
   (%run-parser/if-success
    parser input position
-   (lambda (value next result)
-     (%success value next result))
+   #'%success
    (lambda (failure next)
      (values nil nil
              next
@@ -88,8 +86,7 @@ succeed here or fail hard, which turns a vague backtracking miss into a precise
 error. PARSER's success is unchanged."
   (%run-parser/if-success
    parser input position
-   (lambda (value next result)
-     (%success value next result))
+   #'%success
    (lambda (failure next)
      (declare (ignore next))
      (%committed-failure-from failure))))
