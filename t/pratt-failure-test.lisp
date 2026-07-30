@@ -105,6 +105,24 @@
         (expect next :to-equal 3)
         (%assert-pratt-failure-shape actual-failure 3 :non-zero-divisor :slash)))))
 
+(it-sequential "pratt-token-limit-failure-reports-the-requested-start-position-test"
+  ;; PARSE-PRATT is the only entry point taking a caller-supplied :POSITION, so
+  ;; it is the only one that can misreport it. It used to hand
+  ;; %ENSURE-PARSER-TOKEN-VECTOR no position at all and return a literal 0,
+  ;; placing a resource-limit failure at the start of the stream however far in
+  ;; the caller had asked to begin.
+  (with-pratt-number-table (table)
+    (let ((*maximum-parser-tokens* 1)
+          (tokens (vector (make-token :type :number :text "1" :value 1)
+                          (make-token :type :number :text "2" :value 2)
+                          (make-token :type :number :text "3" :value 3))))
+      (assert-pratt-failure-values (parse-pratt tokens table :position 2)
+          (value next failure)
+        (expect next :to-equal 2)
+        (expect (parse-failure-position failure) :to-equal 2)
+        (expect (parse-failure-expected failure) :to-equal :maximum-parser-tokens)
+        (expect (parse-failure-actual failure) :to-equal 3)))))
+
 (it-sequential "pratt-infix-handler-controls-next-position-test"
   (with-pratt-number-table (table)
     (let* ((trailing (make-token :type :bang :text "!"))

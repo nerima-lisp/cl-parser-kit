@@ -62,18 +62,6 @@ positive exponent saturates to the largest representable float of the rule's
 FLOAT-TYPE and a huge negative one underflows to zero. Rebind or SETF to widen
 the honoured range.")
 
-(defun %coerce-bounded-float (rational float-type)
-  "Coerce RATIONAL to FLOAT-TYPE, saturating to the largest representable
-magnitude on overflow instead of signalling (underflow already yields zero)."
-  (handler-case (coerce rational float-type)
-    (arithmetic-error ()
-      (let ((most (ecase float-type
-                    (single-float most-positive-single-float)
-                    (double-float most-positive-double-float)
-                    (short-float most-positive-short-float)
-                    (long-float most-positive-long-float))))
-        (if (minusp rational) (- most) most)))))
-
 (defun %scan-float-fractional-part (source after-int limit-end)
   "If a '.' at AFTER-INT is followed by at least one digit, scan the fractional
 digit run. Returns (values frac-start frac-end new-after-int); FRAC-START is

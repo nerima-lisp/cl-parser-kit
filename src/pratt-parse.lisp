@@ -151,17 +151,21 @@ SETF to raise it for intentionally large or deep expressions.")
 
 (defun parse-pratt (tokens table &key (position 0) (min-binding-power 0))
   "Parse an expression from TOKENS using TABLE."
+  ;; POSITION is threaded into the limit check and its failure, as RUN-PARSER
+  ;; does: PARSE-TOKENS and PARSE-ALL may pass a literal 0 because neither
+  ;; accepts a start position, but this entry point does, and a resource-limit
+  ;; failure that reported 0 regardless of where the caller asked to start
+  ;; would misplace the error.
   (multiple-value-bind (stream limit-failure)
-      (%ensure-parser-token-vector tokens)
+      (%ensure-parser-token-vector tokens position)
     (if limit-failure
-        (values nil nil 0 limit-failure)
+        (values nil nil position limit-failure)
         (%pratt-parse/cps
          stream
          table
          position
          min-binding-power
-         (lambda (value next diagnostics)
-           (%success value next diagnostics))
+         #'%success
          (lambda (next failure)
            (values nil nil next failure))))))
 

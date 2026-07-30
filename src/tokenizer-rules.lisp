@@ -201,19 +201,44 @@ remaining digits start a new number token, the same graceful split already
 used for a stray interior '.'. Rebind or SETF to raise it for intentionally
 high-precision literals.")
 
+(defun %coerce-bounded-float (rational float-type)
+  "Coerce RATIONAL to FLOAT-TYPE, saturating to the largest representable
+magnitude on overflow instead of signalling (underflow already yields zero).
+
+Lives here rather than beside MAKE-FLOAT-RULE, its other caller, because
+TOKENIZER-RULES-EXTRA.LISP loads after this file: %PARSE-DECIMAL-TEXT below
+needs it too, and a tokenizer must never signal on input it agreed to scan."
+  (handler-case (coerce rational float-type)
+    (arithmetic-error ()
+      (let ((most (ecase float-type
+                    (single-float most-positive-single-float)
+                    (double-float most-positive-double-float)
+                    (short-float most-positive-short-float)
+                    (long-float most-positive-long-float))))
+        (if (minusp rational) (- most) most)))))
+
 (defun %parse-decimal-text (text)
   "Parse a well-formed decimal run (as produced by the number scanner) without
 using the Lisp reader. Feeding untrusted text to READ-FROM-STRING would intern
 malformed runs as permanent symbols (an unbounded-memory DoS), so lexing is done
-with PARSE-INTEGER only."
+with PARSE-INTEGER only.
+
+The final coercion saturates via %COERCE-BOUNDED-FLOAT rather than calling
+COERCE directly. *MAXIMUM-NUMBER-LEXEME-LENGTH* bounds the lexeme at 1024
+characters, which keeps the intermediate rational cheap but still admits an
+integer part far beyond MOST-POSITIVE-SINGLE-FLOAT -- 39 digits is enough --
+so a bare COERCE would let input like \"999...9.5\" escape TOKENIZE as an
+unhandled FLOATING-POINT-OVERFLOW. Saturating matches MAKE-FLOAT-RULE, which
+has always guarded its own identical coercion this way."
   (let ((dot (position #\. text)))
     (if dot
         (let ((integer-part (parse-integer text :end dot))
               (fraction-text (subseq text (1+ dot))))
-          (coerce (+ integer-part
-                     (/ (parse-integer fraction-text)
-                        (expt 10 (length fraction-text))))
-                  'single-float))
+          (%coerce-bounded-float
+           (+ integer-part
+              (/ (parse-integer fraction-text)
+                 (expt 10 (length fraction-text))))
+           'single-float))
         (parse-integer text))))
 
 (defun make-number-rule (&key (type :number) skip-p)

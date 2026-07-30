@@ -79,6 +79,18 @@
      tokens
      (list (%make-tokenizer-token-spec :type :number :text "3.14" :value 3.14)))))
 
+(it-sequential "number-rule-saturates-instead-of-signalling-on-a-huge-decimal-test"
+  ;; *MAXIMUM-NUMBER-LEXEME-LENGTH* caps the lexeme at 1024 characters, which
+  ;; bounds the intermediate rational but still admits an integer part well past
+  ;; MOST-POSITIVE-SINGLE-FLOAT -- 39 digits suffices. %PARSE-DECIMAL-TEXT used
+  ;; to COERCE unguarded, so this input escaped TOKENIZE as an unhandled
+  ;; FLOATING-POINT-OVERFLOW rather than producing a token.
+  (let* ((tokenizer (make-tokenizer :rules (list (make-number-rule))))
+         (source (concatenate 'string (make-string 40 :initial-element #\9) ".5"))
+         (tokens (tokenize source tokenizer)))
+    (expect (length tokens) :to-equal 1)
+    (expect (token-value (elt tokens 0)) :to-equal most-positive-single-float)))
+
 (it-sequential "number-rule-rejects-a-second-interior-decimal-point-test"
   ;; A second '.' is rejected once SEEN-DOT is already true, splitting a
   ;; hostile run like "1.2.3" into a decimal number, a lone unmatched dot, and
