@@ -268,7 +268,7 @@ written directly to a stream or escaped for a DOT label first."
   (let ((value (funcall value-fn node)))
     (if value
         (format nil "~S ~S" (funcall type-fn node) value)
-        (format nil "~S" (funcall type-fn node)))))
+        (prin1-to-string (funcall type-fn node)))))
 
 (defun %tree->string (node type-fn value-fn children-fn &optional (indent 0))
   "Render NODE and its descendants as a human-readable indented tree, one node per

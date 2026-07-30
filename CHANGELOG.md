@@ -52,6 +52,51 @@ release publish an empty body and fail. Keep `## [Unreleased]` at the top.
 - the README is now an entry point rather than a manual, 887 lines down to
   under 150. Nothing was lost — every section removed already existed on the
   documentation site
+- `flake.nix` is now a single call to `cl-nix-forge`'s `mkPackageFlake`
+  (`github:nerima-lisp/cl-nix-forge/v0.4.0`), per the org-wide mandate in
+  `nerima-lisp/.github`'s `PACKAGE_STANDARD.md` ("flake.nix の書き方"): 516
+  hand-written lines down to 411, of which roughly 150 are code and the rest
+  are the "why" comments the standard requires in place of what the code used
+  to spell out by hand. `cl-weave` and `cl-prolog` move from `flake = false`
+  raw source trees to full flake inputs — `lispCheckDependencies` needs
+  `cl-weave` as a built, registry-composable ASDF system, which only a real
+  flake output (`packages.<system>.cl-weave`, published starting in `cl-weave`
+  v1.1.0) provides. `cl-prolog` v1.1.0 predates its own `cl-nix-forge`
+  migration, so its system is still built from source via `lispDerivation`.
+  Both pin `v1.1.0`; `paredit-cli` pins `v1.3.0`. Two things this repository
+  had already fixed once were deliberately preserved rather than inherited
+  from the two reference migrations (`cl-json-kit`, `cl-prolog`): `meta.
+  platforms` stays `= systems` (not the broader `lib.platforms.unix`), since
+  nixpkgs enforces `meta.platforms` and letting it drift wider than what
+  `systems` actually verifies means advertising an unverified build; and the
+  90%/80% coverage floor `scripts/check-coverage.pl` enforces (`ADR-0063` in
+  `CODING_STANDARD.md`) is kept via a custom `mkCommandCheck`, since
+  `cl-nix-forge`'s own `mkCoverageReport` gates on nothing but the report's
+  non-emptiness. `sourceInclude` was extended by running the suite against the
+  filtered tree rather than by guessing: beyond the doc set
+  (`README.md`/`CHANGELOG.md`/`docs/src`), the test suite also reads `LICENSE`
+  (a resolved-link assertion) and executes `scripts/with-timeout.pl` and
+  `scripts/run-implementation-smoke.sh`, and `checks.coverage`'s validation
+  command runs `scripts/check-coverage.pl` out of the build tree. Verified via
+  `nix flake check`: `checks.default` (622/622), `checks.coverage` (floor
+  held), `checks.docs`, `checks.package` and `checks.paredit-lint` all green
+- a fresh `paredit inspect lint` sweep under the bumped `paredit-cli` (whose
+  lint rule set grew substantially since the previous pin) found two genuine
+  simplifications: `tokenizer-rules-extra.lisp`'s `make-hash-table` dropped an
+  explicit `:test 'eql`, which is the default; `tree.lisp`'s single-argument
+  `(format nil "~S" ...)` became `(prin1-to-string ...)`. The sweep's other 81
+  findings were investigated and declined: 25 (`eval-of-non-constant`,
+  `defclass-slot-option`) are the lint tool reading macro-template source
+  without macroexpanding it, so a keyword built via `(intern ... :keyword)` or
+  interned from a macro's own literal argument reads as "not a keyword" or
+  "computed" from the static text alone; 5 (`check-then-act`,
+  `handler-case-swallows-error`) assume multi-threaded execution or silent
+  error-hiding that do not apply to this single-threaded library's dedup
+  guards and mutation-testing kill oracle; the remainder repeat previously
+  declined categories (`accessor-arity`, `redundant-progn`, `de-morgan`,
+  `negated-if`) or flag `t/`-only helpers operating on fixture-sized
+  collections, where hoisting a hash table would add indirection with no
+  measurable benefit
 
 ### Removed
 

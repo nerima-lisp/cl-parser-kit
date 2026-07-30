@@ -184,7 +184,7 @@ Every token produced carries TYPE; distinguish operators by their TEXT."
                           operators :operator-count)))
     (loop for operator across operator-vector
           do (%ensure-non-empty-string operator "operator"))
-    (let ((buckets (make-hash-table :test 'eql)))
+    (let ((buckets (make-hash-table)))
       (loop for operator across operator-vector
             do (push operator (gethash (char operator 0) buckets)))
       (maphash (lambda (char operators)
