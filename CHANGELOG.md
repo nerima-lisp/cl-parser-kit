@@ -18,6 +18,53 @@ release publish an empty body and fail. Keep `## [Unreleased]` at the top.
 
 ## [Unreleased]
 
+### Fixed
+
+- `parse-pratt` dropped its caller-supplied `:position` on the token-limit
+  failure path: `%ensure-parser-token-vector` was called with no position at
+  all and the failure was returned with a hardcoded `0`, misreporting where a
+  resource-limit error actually occurred whenever a caller started parsing
+  partway through a token stream. `parse-tokens`/`parse-all` are unaffected —
+  they never accept a start position, so `0` was always correct for them
+- `%parse-decimal-text` (`tokenizer-rules-extra.lisp`) coerced its
+  accumulated rational straight to a float, unlike the sibling
+  `make-float-rule`, which has always guarded the identical coercion with
+  `%coerce-bounded-float`. `*maximum-number-lexeme-length*` bounds the
+  lexeme at 1024 characters but still admits an integer part far past
+  `most-positive-single-float` — 39 digits is enough — so a decimal literal
+  like `"999...9.5"` escaped `tokenize` as an unhandled
+  `FLOATING-POINT-OVERFLOW` instead of producing a token, contradicting the
+  tokenizer's own contract to never signal on input it agreed to scan.
+  `%coerce-bounded-float` moved to `tokenizer-rules.lisp` (loaded before
+  `tokenizer-rules-extra.lisp`) so both callers can reach it without a
+  forward reference
+
+### Added
+
+- a third `it-property` test for the AST sexp round-trip law, using
+  `cl-weave`'s `gen-recursive` to generate genuinely branching tree shapes.
+  The two existing property tests only ever generated a single linear spine
+  or a single flat fan-out (`%deep-ast`/`%wide-ast`) — every case a path or a
+  star, never a shape with more than one child at more than one depth
+  together, which is what actually exercises `%tree-walk`/`%tree-reduce`/
+  `%tree-equal`'s recursion over several unevenly-deep children at once
+
+### Changed
+
+- extracted `%failure-committed-if-consumed` (`combinators.lisp`): five sites
+  across `combinators.lisp` and `combinators-repeat.lisp` re-derived SEQ's
+  commitment rule inline, each restating in a comment the same rule the
+  others already stated
+- seven `%run-parser/if-success` success continuations across
+  `combinators-boundary.lisp`, `combinators-backtrack.lisp`,
+  `combinators-recover.lisp`, `combinators-sequence.lisp` and
+  `pratt-parse.lisp` were pure eta-expansions of `#'%success`, replaced with
+  the function reference directly
+- removed a 3-function, 31-line dead chain in `t/helpers-examples-doc.lisp`
+  (`markdown-bullet-code-items` and the two helpers only it called): its sole
+  caller was a README-vs-`API.md` assertion deleted when those root files
+  were replaced by the published docs site
+
 ## [1.0.1] - 2026-07-31
 
 ### Changed
