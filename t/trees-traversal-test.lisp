@@ -18,6 +18,21 @@
                  :children (loop repeat child-count
                                  collect (make-ast-node :type :leaf))))
 
+(defun %gen-branching-ast (&key (max-depth 4))
+  "A CL-WEAVE property generator for AST-NODE trees with genuinely ragged
+branching -- unlike %DEEP-AST (a single linear spine) and %WIDE-AST (one flat
+fan-out), GEN-RECURSIVE's per-level coin flip between the leaf and branch
+generators produces shapes with a mix of both at every depth, which is what
+actually exercises %TREE-WALK/%TREE-REDUCE/%TREE-EQUAL's recursion over
+multiple, unevenly-deep children."
+  (gen-recursive
+   (gen-map (lambda (value) (make-ast-node :type :leaf :value value))
+            (gen-member '(:leaf-a :leaf-b)))
+   (lambda (self)
+     (gen-map (lambda (children) (make-ast-node :type :branch :children children))
+              (gen-list self :min-length 1 :max-length 3)))
+   :max-depth max-depth))
+
 (defun %cyclic-child-ast ()
   (let* ((child (make-ast-node :type :leaf))
          (children (list child))
@@ -336,6 +351,16 @@
   (let* ((original (%wide-ast child-count))
          (rebuilt (sexp->ast-node (ast-node->sexp original))))
     (expect (ast-node-equal original rebuilt) :to-be-truthy)))
+
+(it-property "property-ast-node-sexp-round-trips-for-any-branching-shape"
+    ((tree (%gen-branching-ast)))
+  ;; %DEEP-AST and %WIDE-AST above only ever generate a single spine or a
+  ;; single flat fan-out -- every generated tree is either a path or a star,
+  ;; never a shape with more than one child AND more than one level, which is
+  ;; the case that actually exercises multiple children at multiple depths
+  ;; together. GEN-RECURSIVE's per-level leaf/branch coin flip covers that gap.
+  (let ((rebuilt (sexp->ast-node (ast-node->sexp tree))))
+    (expect (ast-node-equal tree rebuilt) :to-be-truthy)))
 
 (it-sequential "cst-node-construction-and-serialization-provided-too-test"
   (let* ((token (make-token :type :ident :text "y"))
