@@ -3,7 +3,7 @@
   :author "takeokunn <bararararatty@gmail.com>"
   :maintainer "takeokunn <bararararatty@gmail.com>"
   :license "MIT"
-  :version "1.0.0"
+  :version "1.0.1"
   :homepage "https://github.com/nerima-lisp/cl-parser-kit"
   :bug-tracker "https://github.com/nerima-lisp/cl-parser-kit/issues"
   :source-control (:git "https://github.com/nerima-lisp/cl-parser-kit.git")
@@ -56,7 +56,7 @@
   :author "takeokunn <bararararatty@gmail.com>"
   :maintainer "takeokunn <bararararatty@gmail.com>"
   :license "MIT"
-  :version "1.0.0"
+  :version "1.0.1"
   :homepage "https://github.com/nerima-lisp/cl-parser-kit"
   :bug-tracker "https://github.com/nerima-lisp/cl-parser-kit/issues"
   :source-control (:git "https://github.com/nerima-lisp/cl-parser-kit.git")

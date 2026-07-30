@@ -18,6 +18,8 @@ release publish an empty body and fail. Keep `## [Unreleased]` at the top.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-07-31
+
 ### Changed
 
 - the shared test fixtures and support code in `t/` now carry the `helpers-`
