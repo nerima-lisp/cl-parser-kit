@@ -1,3 +1,10 @@
+;;;; This form comes FIRST, before any defsystem. ASDF binds *package* to
+;;;; ASDF-USER only for a file it loads itself; read any other way -- a REPL
+;;;; `load`, an editor evaluating the buffer, flake.nix parsing :version -- the
+;;;; file is read in whatever package happens to be current. Saying it makes
+;;;; the file self-contained.
+(in-package #:asdf-user)
+
 (asdf:defsystem "cl-parser-kit"
   :description "Small parser toolkit for Common Lisp text languages."
   :author "takeokunn <bararararatty@gmail.com>"

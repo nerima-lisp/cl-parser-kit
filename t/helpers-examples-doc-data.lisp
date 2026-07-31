@@ -32,8 +32,7 @@ if?")
      "style-warning")
     ("docs/src/roadmap.md"
      "nix flake check"
-     "coverage"
-     "CHANGELOG.md")
+     "coverage")
     ("docs/src/api-reference.md/recommended-entry-points"
      "## Recommended Entry Points"
      "## Quick Start Surface"
@@ -74,7 +73,6 @@ ships copies of them and there is nothing here to assert about them.")
 
 (defparameter *published-documents*
   '("README.md"
-    "CHANGELOG.md"
     "docs/src/index.md"
     "docs/src/installation.md"
     "docs/src/quick-start.md"
@@ -86,6 +84,8 @@ ships copies of them and there is nothing here to assert about them.")
     "docs/src/architecture.md"
     "docs/src/development.md"
     "docs/src/roadmap.md")
-  "Every Markdown document this repository publishes, in nav order. Excludes
-docs/src/changelog.md, whose entire body is a pymdownx.snippets include that
-only resolves when MkDocs runs.")
+  "Every Markdown document this repository publishes, in nav order.
+
+CHANGELOG.md and docs/src/changelog.md were both removed by the 2026-08-01
+revision of PACKAGE_STANDARD.md: the GitHub Release description is now the
+only canonical changelog, so neither file exists to be published.")

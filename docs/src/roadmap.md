@@ -13,7 +13,8 @@ the API practical, testable, and easy to audit.
 
 ## Mid Term
 
-- keep `CHANGELOG.md` current for every tagged release
+- write the GitHub Release description for every tagged release; it is the
+  only canonical release history
 - tighten the documentation around recommended parser composition and
   upgrade patterns
 - keep the public surface small and intentional. `v1.0.0` froze it under

@@ -79,7 +79,8 @@ The release process is org-wide and lives in
 [RELEASE_STANDARD.md](https://github.com/nerima-lisp/.github/blob/main/RELEASE_STANDARD.md).
 The short version: `.asd` `:version` is the only place a version is edited,
 `.github/workflows/release.yml` refuses a tag that disagrees with it, and the
-release body is taken from the matching `CHANGELOG.md` section.
+workflow then opens an empty DRAFT release for the maintainer to write the
+notes into. That description is the only canonical release history.
 
 ## Contributing
 

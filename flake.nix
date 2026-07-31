@@ -89,15 +89,16 @@
     let
       lib = nixpkgs.lib;
 
-      # Only what is verified: x86_64-linux by CI, aarch64-darwin by the
-      # maintainer's local `nix flake check`. aarch64-linux and x86_64-darwin
-      # are not declared because nothing runs them, and a platform no runner
-      # can build makes `nix flake check --all-systems` fail with "platform
-      # mismatch" rather than skip it. See ADR-0078.
-      systems = [
-        "x86_64-linux"
-        "aarch64-darwin"
-      ];
+      # Only what is verified, and CI verifies exactly one platform:
+      # x86_64-linux. aarch64-darwin was dropped in the 2026-08-01 revision of
+      # PACKAGE_STANDARD.md -- it rested on the maintainer running `nix flake
+      # check` locally, which nothing enforces, so it was a promise without a
+      # gate. aarch64-linux and x86_64-darwin were never declared.
+      #
+      # Consequence: `nix develop` and `nix build` no longer resolve on macOS,
+      # because mkPackageFlake generates packages/checks/apps/devShells from
+      # this one list. Development happens on Linux.
+      systems = [ "x86_64-linux" ];
 
       # cl-weave as an ASDF SYSTEM, for `lispCheckDependencies`.
       #
@@ -201,10 +202,10 @@
       # and dropping one does not fail to build, it fails an assertion about a
       # file that is simply absent:
       #
-      #   README.md, CHANGELOG.md, docs/src/*.md  t/examples-docs-test.lisp and
+      #   README.md, docs/src/*.md                t/examples-docs-test.lisp and
       #     t/helpers-examples-doc-data.lisp assert that every documented
       #     snippet still appears in the document that documents it, over 11
-      #     named pages under docs/src plus the two root files.
+      #     named pages under docs/src plus README.md.
       #   scripts/run-implementation-smoke.sh     t/examples-ops-test.lisp reads
       #     it to assert the smoke script still drives the checked-in entry
       #     points for all five implementations.
@@ -227,7 +228,6 @@
       # not here would fail in the suite rather than in the docs build.
       sourceInclude = [
         ./README.md
-        ./CHANGELOG.md
         ./LICENSE
         ./docs/src
         ./scripts/check-coverage.pl
@@ -297,18 +297,16 @@
       # offline inside the sandbox.
       #
       # `root` is the REPOSITORY root and not `./docs`, with an explicit
-      # fileset, because docs/src/changelog.md is a one-line
-      # `--8<-- "CHANGELOG.md"` snippet include resolved against the working
-      # directory (docs/mkdocs.yml sets `base_path: ["."]`). A `root = ./docs`
-      # site cannot see that file, and `--strict` with `check_paths: true`
-      # turns the missing include into a build failure. This is the case
-      # `mkDocsSite`'s optional `fileset` argument exists for.
+      # fileset, because `mkdocsYmlName` is a repo-root-relative path. It used
+      # to be root-rooted for a second reason as well -- docs/src/changelog.md
+      # was a one-line `--8<-- "CHANGELOG.md"` snippet include needing the
+      # top-level file in the tree -- but both files were abolished in the
+      # 2026-08-01 revision and pymdownx.snippets is no longer configured.
       docs = {
         root = ./.;
         fileset = lib.fileset.unions [
           ./docs/mkdocs.yml
           ./docs/src
-          ./CHANGELOG.md
         ];
         mkdocsYmlName = "docs/mkdocs.yml";
       };

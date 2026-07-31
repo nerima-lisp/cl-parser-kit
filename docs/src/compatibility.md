@@ -9,7 +9,7 @@ are not repeated here:
   — `.asd` `:version` is the single source of truth, and the major/minor/patch
   classification.
 - [Release process](https://github.com/nerima-lisp/.github/blob/main/RELEASE_STANDARD.md)
-  — the release gate, tagging, and CHANGELOG handling.
+  — the release gate, tagging, and release-note handling.
 
 ## Verified Baseline
 
@@ -65,4 +65,5 @@ inputs.cl-parser-kit = {
 If you need an unreleased fix, pin the exact commit and rerun `nix flake check`
 from that checkout before treating it as a supported baseline.
 
-See the [Changelog](changelog.md) for what changed in each release.
+See the [release notes](https://github.com/nerima-lisp/cl-parser-kit/releases)
+for what changed in each release.

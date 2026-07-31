@@ -71,7 +71,7 @@ AST/CST helpers — deliberately compact rather than a compiler framework.
 
     [:octicons-arrow-right-24: Development](development.md) ·
     [Roadmap](roadmap.md) ·
-    [Changelog](changelog.md)
+    [Releases](https://github.com/nerima-lisp/cl-parser-kit/releases)
 
 </div>
 

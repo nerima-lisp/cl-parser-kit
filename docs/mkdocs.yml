@@ -3,8 +3,6 @@
 # Build:   mkdocs build --strict --config-file docs/mkdocs.yml
 # Serve:   mkdocs serve --config-file docs/mkdocs.yml
 #
-# Run both from the repository root: pymdownx.snippets resolves
-# `--8<-- "CHANGELOG.md"` relative to the working directory.
 # The Nix flake (`nix build .#docs`) drives the same config offline.
 
 site_name: cl-parser-kit
@@ -97,12 +95,6 @@ markdown_extensions:
       line_spans: __span
       pygments_lang_class: true
   - pymdownx.inlinehilite
-  - pymdownx.snippets:
-      # mkdocs is invoked from the repository root as
-      # `mkdocs build --strict --config-file docs/mkdocs.yml`, so "." is the root.
-      base_path:
-        - "."
-      check_paths: true
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
@@ -150,7 +142,6 @@ nav:
   - Project:
       - Development: development.md
       - Roadmap: roadmap.md
-      - Changelog: changelog.md
 
 not_in_nav: |
   notes/
