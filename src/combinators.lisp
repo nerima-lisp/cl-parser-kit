@@ -195,7 +195,7 @@ is a docstring."
   ;; This STRINGP test runs while whatever file calls DEFINE-PARSER-FUNCTION is
   ;; being compiled, never at program-execution time, so SB-COVER can never
   ;; mark it covered however thoroughly it is exercised -- the third
-  ;; attribution artifact category docs/src/development.md documents, the same one as
+  ;; attribution artifact category docs/src/project/development.md documents, the same one as
   ;; %ASSERT-SUCCESS-VALUES' declare-stripping loop. Both arms are genuinely
   ;; tested: t/api-surface-test.lisp macroexpands one form with a docstring and
   ;; one whose whole body is a string, and compares the resulting DEFUNs.

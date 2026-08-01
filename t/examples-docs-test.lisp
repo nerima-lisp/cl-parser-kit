@@ -13,7 +13,7 @@
       (expect (nreverse missing) :to-equal '()))))
 
 (it-sequential "examples-guide-covers-all-example-files-test"
-  (let* ((contents (doc-file-contents "docs/src/examples.md"))
+  (let* ((contents (doc-file-contents "docs/src/guide/examples.md"))
          (missing (loop for name in (example-file-names)
                         unless (search name contents :test #'char-equal)
                         collect name)))
@@ -24,28 +24,28 @@
    "README.md"
    (document-required-snippets "README.md"))
   (development-guide-documents-verification-contract-test
-   "docs/src/development.md"
-   (document-required-snippets "docs/src/development.md"))
+   "docs/src/project/development.md"
+   (document-required-snippets "docs/src/project/development.md"))
   (compatibility-documents-public-surface-contract-test
-   "docs/src/compatibility.md"
-   (document-required-snippets "docs/src/compatibility.md"))
+   "docs/src/reference/compatibility.md"
+   (document-required-snippets "docs/src/reference/compatibility.md"))
   (roadmap-documents-current-oss-gaps-test
-   "docs/src/roadmap.md"
-   (document-required-snippets "docs/src/roadmap.md"))
+   "docs/src/project/roadmap.md"
+   (document-required-snippets "docs/src/project/roadmap.md"))
   (api-guide-documents-recommended-entry-points-test
-   "docs/src/api-reference.md"
-   (document-required-snippets "docs/src/api-reference.md/recommended-entry-points")))
+   "docs/src/reference/api.md"
+   (document-required-snippets "docs/src/reference/api.md/recommended-entry-points")))
 
 (register-document-snippet-tests
   (parsing-patterns-guide-documents-recommended-upgrade-path-test
-   "docs/src/parsing-patterns.md"
-   (document-required-snippets "docs/src/parsing-patterns.md"))
+   "docs/src/guide/parsing-patterns.md"
+   (document-required-snippets "docs/src/guide/parsing-patterns.md"))
   (api-guide-documents-canonical-entry-points-test
-   "docs/src/api-reference.md"
-   (document-required-snippets "docs/src/api-reference.md/canonical-entry-points")))
+   "docs/src/reference/api.md"
+   (document-required-snippets "docs/src/reference/api.md/canonical-entry-points")))
 
 (it-sequential "api-guide-covers-all-exported-symbols-test"
-  (let* ((documented (markdown-code-identifiers "docs/src/api-reference.md"))
+  (let* ((documented (markdown-code-identifiers "docs/src/reference/api.md"))
          (missing (sort (loop for symbol being the external-symbols of (find-package :cl-parser-kit)
                               for name = (string-downcase (symbol-name symbol))
                               unless (member name documented :test #'string=)
@@ -68,6 +68,6 @@
 
 (it-sequential "examples-guide-documents-raw-checkout-example-verification-test"
   (assert-document-contains-all
-   "docs/src/examples.md"
+   "docs/src/guide/examples.md"
    '("scripts/run-examples.lisp"
      "raw-checkout regression pass")))

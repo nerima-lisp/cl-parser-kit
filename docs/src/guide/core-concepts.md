@@ -1,9 +1,9 @@
 # Core Concepts
 
-This page introduces the vocabulary behind the [Quick Start](quick-start.md)
+This page introduces the vocabulary behind the [Quick Start](../getting-started.md)
 snippets. For the layer model and dependency direction between these
-concepts, see [Architecture](architecture.md). For the exact exported
-symbols behind each concept, see [API Reference](api-reference.md).
+concepts, see [Architecture](../reference/architecture.md). For the exact exported
+symbols behind each concept, see [API Reference](../reference/api.md).
 
 ## Token
 
@@ -91,5 +91,5 @@ Tree helpers are provided for both abstract and concrete syntax trees:
 
 - [Parsing Patterns](parsing-patterns.md) — how to choose the smallest
   stable layer for a grammar, and how these layers compose.
-- [API Reference](api-reference.md) — the exported surface for each concept above,
+- [API Reference](../reference/api.md) — the exported surface for each concept above,
   grouped by concern.

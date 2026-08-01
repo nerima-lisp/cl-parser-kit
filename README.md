@@ -31,7 +31,7 @@ The source for that site lives in [docs/src/](docs/src/index.md).
 ```
 
 Combinators, Pratt parsing, diagnostics and CST output are covered step by step
-in the [Quick Start](https://nerima-lisp.github.io/cl-parser-kit/quick-start/).
+in [Recipes](https://nerima-lisp.github.io/cl-parser-kit/guide/recipes/).
 
 ## Install
 
@@ -47,17 +47,17 @@ Note the pinned tag. Consumers inside this org pin a release tag rather than
 following the default branch.
 
 ASDF, Quicklisp, Ultralisp and manual-registry paths are described in
-[Installation](https://nerima-lisp.github.io/cl-parser-kit/installation/).
+[Getting Started](https://nerima-lisp.github.io/cl-parser-kit/getting-started/).
 
 ## Documentation
 
-- [Getting started](https://nerima-lisp.github.io/cl-parser-kit/installation/)
+- [Getting started](https://nerima-lisp.github.io/cl-parser-kit/getting-started/)
   — every install path, and how to verify a checkout.
-- [Core concepts](https://nerima-lisp.github.io/cl-parser-kit/core-concepts/)
+- [Core concepts](https://nerima-lisp.github.io/cl-parser-kit/guide/core-concepts/)
   — tokens, spans, tokenizers, the parser and Pratt layers, diagnostics.
-- [API reference](https://nerima-lisp.github.io/cl-parser-kit/api-reference/)
+- [API reference](https://nerima-lisp.github.io/cl-parser-kit/reference/api/)
   — the exported surface grouped by concern.
-- [Compatibility](https://nerima-lisp.github.io/cl-parser-kit/compatibility/)
+- [Compatibility](https://nerima-lisp.github.io/cl-parser-kit/reference/compatibility/)
   — what `v1.0.0` froze, and what it deliberately did not.
 
 ## Development
@@ -79,7 +79,7 @@ runs from a raw checkout without Nix:
 sbcl --script run-tests.lisp
 ```
 
-See [Development](https://nerima-lisp.github.io/cl-parser-kit/development/) for
+See [Development](https://nerima-lisp.github.io/cl-parser-kit/project/development/) for
 the coverage floor, the other entry points, and the release process.
 
 ## Contributing

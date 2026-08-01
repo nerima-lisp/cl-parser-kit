@@ -3,8 +3,8 @@
 This repository includes small, focused examples instead of one large
 tutorial. Each file demonstrates a different layer of `cl-parser-kit`.
 
-For the exported API grouped by concern, see [API Reference](api-reference.md).
-For the layer model and dependencies, see [Architecture](architecture.md).
+For the exported API grouped by concern, see [API Reference](../reference/api.md).
+For the layer model and dependencies, see [Architecture](../reference/architecture.md).
 For the recommended parser construction and upgrade rules, see
 [Parsing Patterns](parsing-patterns.md).
 

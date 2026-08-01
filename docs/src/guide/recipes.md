@@ -1,18 +1,9 @@
-# Quick Start
+# Recipes
 
-## Tokenize a string
-
-```lisp
-(asdf:load-system :cl-parser-kit)
-
-(let* ((tokenizer (cl-parser-kit:make-tokenizer
-                   :rules (list (cl-parser-kit:make-whitespace-rule :skip-p t)
-                                (cl-parser-kit:make-literal-rule :plus "+")
-                                (cl-parser-kit:make-number-rule)
-                                (cl-parser-kit:make-identifier-rule))))
-       (tokens (cl-parser-kit:tokenize-string "sum + 42" tokenizer)))
-  tokens)
-```
+A worked tour of every parser construction style the library offers, from
+custom lexical rules through Pratt tables to operator chains. Start with
+[Getting Started](../getting-started.md) if you have not tokenized anything
+yet, and see [Diagnostics](diagnostics.md) for rendering failures.
 
 ## Strings, comments, and DSL-style identifier boundaries
 
@@ -182,33 +173,6 @@ parser:
 - infix handlers return `(values t value next nil)` on success
 - handlers may return `(values nil nil next failure)` for domain-specific
   validation failures
-
-## Failure rendering with source excerpts
-
-```lisp
-(let* ((tokenizer (cl-parser-kit:make-tokenizer
-                   :rules (list (cl-parser-kit:make-whitespace-rule :skip-p t)
-                                (cl-parser-kit:make-literal-rule :plus "+")
-                                (cl-parser-kit:make-number-rule))))
-       (table (cl-parser-kit:make-pratt-table)))
-  (cl-parser-kit:register-prefix-operator
-   table :number 0
-   (lambda (token stream next current-table)
-     (declare (ignore stream current-table))
-     (values t (cl-parser-kit:token-value token) next nil)))
-  (cl-parser-kit:register-infix-operator
-   table :plus 10 11
-   (lambda (left op right next current-table)
-     (declare (ignore op current-table))
-     (values t (list :add left right) next nil)))
-  (multiple-value-bind (ok value next failure)
-      (cl-parser-kit:parse-pratt-source "1 + +" tokenizer table)
-    (declare (ignore next))
-    (if ok
-        value
-        (cl-parser-kit:parse-failure->string failure))))
-```
-
 ## Working directly with tokens
 
 If your pipeline already has tokens, use `parse-tokens` or `parse-all`
@@ -389,37 +353,3 @@ When a grammar is just a repeated operand/operator pair, `chainl1` and
 `operator-parser` is the thin wrapper for the common "match a token, ignore
 its payload, return a binary combiner" pattern that shows up around
 `chainl1` and `chainr1`.
-
-## Building diagnostics directly
-
-When callers need to construct a user-facing diagnostic directly, the
-public API also supports notes and fix-its:
-
-```lisp
-(cl-parser-kit:diagnostic->string
- (cl-parser-kit:error-diagnostic
-  "bad token"
-  :span (cl-parser-kit:make-span :source "foo + bar"
-                                 :start 0 :end 3
-                                 :start-line 1 :start-column 1
-                                 :end-line 1 :end-column 2)
-  :notes (list (cl-parser-kit:note-diagnostic
-                "check syntax"
-                :span (cl-parser-kit:make-span :start 4 :end 5
-                                               :start-line 1 :start-column 5
-                                               :end-line 1 :end-column 6)))
-  :fixes (list (cl-parser-kit:make-fix-it
-                :span (cl-parser-kit:make-span :start 0 :end 1)
-                :replacement "x"))))
-```
-
-## What's next
-
-- [Core Concepts](core-concepts.md) for the vocabulary behind these
-  snippets — tokens, spans, tokenizers, parsers, Pratt parsing, and
-  diagnostics.
-- [Parsing Patterns](parsing-patterns.md) for how to choose the smallest
-  stable layer for your grammar and shape committed failures deliberately.
-- [Examples](examples.md) for a guided tour through every sample file under
-  `examples/`, in recommended reading order.
-- [API Reference](api-reference.md) for the exported surface grouped by concern.

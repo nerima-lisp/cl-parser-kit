@@ -204,7 +204,7 @@
       #
       #   README.md, docs/src/*.md                t/examples-docs-test.lisp and
       #     t/helpers-examples-doc-data.lisp assert that every documented
-      #     snippet still appears in the document that documents it, over 11
+      #     snippet still appears in the document that documents it, over 12
       #     named pages under docs/src plus README.md.
       #   scripts/run-implementation-smoke.sh     t/examples-ops-test.lisp reads
       #     it to assert the smoke script still drives the checked-in entry
@@ -223,7 +223,7 @@
       #   scripts/check-coverage.pl               `checks.coverage`'s validation
       #     command runs it out of the build tree, so it has to be IN that tree.
       #
-      # docs/src is named as a directory rather than as 11 paths: the set of
+      # docs/src is named as a directory rather than as 12 paths: the set of
       # pages is fixed by docs/mkdocs.yml's nav, and a page added there and
       # not here would fail in the suite rather than in the docs build.
       sourceInclude = [

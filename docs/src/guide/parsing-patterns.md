@@ -3,7 +3,7 @@
 This guide documents the recommended parser construction patterns for
 `cl-parser-kit`.
 
-For the exported surface grouped by symbol, see [API Reference](api-reference.md).
+For the exported surface grouped by symbol, see [API Reference](../reference/api.md).
 For runnable snippets, see [Examples](examples.md).
 
 ## Start With The Smallest Stable Layer

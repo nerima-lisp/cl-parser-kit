@@ -5,7 +5,7 @@ shows the normal entry points for each layer.
 
 For the exact symbol list, see [`src/package.lisp`][package-lisp].
 For parser-construction guidance organized by grammar shape, see
-[Parsing Patterns](parsing-patterns.md).
+[Parsing Patterns](../guide/parsing-patterns.md).
 
 ## Spans
 
@@ -664,7 +664,7 @@ If you are new to the library, start here:
 5. use `make-ast-node` or `make-cst-node` to shape downstream data
 6. use `ast-node->sexp` or `cst-node->sexp` when you need stable,
    printable tree output for tests, examples, or REPL inspection
-7. read [Parsing Patterns](parsing-patterns.md) when you need to choose
+7. read [Parsing Patterns](../guide/parsing-patterns.md) when you need to choose
    between seq helpers, projected token payloads, operator-chain helpers,
    and Pratt parsing
 

@@ -13,7 +13,7 @@ if?")
      "nix develop"
      "docs/src/"
      "nerima-lisp.github.io/cl-parser-kit")
-    ("docs/src/development.md"
+    ("docs/src/project/development.md"
      "run-tests.lisp"
      "scripts/run-compile-check.lisp"
      "scripts/run-coverage.lisp"
@@ -24,16 +24,16 @@ if?")
      "nix fmt"
      "CL_PARSER_KIT_CL_WEAVE_ROOT"
      "it-property")
-    ("docs/src/compatibility.md"
+    ("docs/src/reference/compatibility.md"
      "290 symbols"
      "t/api-surface-test.lisp"
      "leading `%`"
      "resource-limit defaults"
      "style-warning")
-    ("docs/src/roadmap.md"
+    ("docs/src/project/roadmap.md"
      "nix flake check"
      "coverage")
-    ("docs/src/api-reference.md/recommended-entry-points"
+    ("docs/src/reference/api.md/recommended-entry-points"
      "## Recommended Entry Points"
      "## Quick Start Surface"
      "parsing-patterns.md"
@@ -42,7 +42,7 @@ if?")
      "start with `chainl1` or `chainr1`; pair them with `operator-parser`"
      "use `make-ast-node` or `make-cst-node` to shape downstream data"
      "use `ast-node->sexp` or `cst-node->sexp`")
-    ("docs/src/parsing-patterns.md"
+    ("docs/src/guide/parsing-patterns.md"
      "## Start With The Smallest Stable Layer"
      "Prefer Sequence Helpers Over Manual Delimiter Loops"
      "Use `delimited-sep-by` or `delimited-sep-by1`"
@@ -51,7 +51,7 @@ if?")
      "alt` returns the farthest branch failure"
      "Move to Pratt parsing when you need:"
      "Replace hand-written delimiter plumbing with `preceded-by`")
-    ("docs/src/api-reference.md/canonical-entry-points"
+    ("docs/src/reference/api.md/canonical-entry-points"
      "## Parser Entry Points"
      "`parse-tokens`"
      "`parse-all`"
@@ -74,16 +74,17 @@ ships copies of them and there is nothing here to assert about them.")
 (defparameter *published-documents*
   '("README.md"
     "docs/src/index.md"
-    "docs/src/installation.md"
-    "docs/src/quick-start.md"
-    "docs/src/core-concepts.md"
-    "docs/src/parsing-patterns.md"
-    "docs/src/examples.md"
-    "docs/src/api-reference.md"
-    "docs/src/compatibility.md"
-    "docs/src/architecture.md"
-    "docs/src/development.md"
-    "docs/src/roadmap.md")
+    "docs/src/getting-started.md"
+    "docs/src/guide/core-concepts.md"
+    "docs/src/guide/recipes.md"
+    "docs/src/guide/parsing-patterns.md"
+    "docs/src/guide/diagnostics.md"
+    "docs/src/guide/examples.md"
+    "docs/src/reference/api.md"
+    "docs/src/reference/compatibility.md"
+    "docs/src/reference/architecture.md"
+    "docs/src/project/development.md"
+    "docs/src/project/roadmap.md")
   "Every Markdown document this repository publishes, in nav order.
 
 CHANGELOG.md and docs/src/changelog.md were both removed by the 2026-08-01

@@ -22,8 +22,8 @@ AST/CST helpers — deliberately compact rather than a compiler framework.
                    (cl-parser-kit:make-identifier-rule))))
     ```
 
-    Continue with [Installation](installation.md) → [Quick Start](quick-start.md)
-    → [Core Concepts](core-concepts.md).
+    Continue with [Getting Started](getting-started.md)
+    → [Core Concepts](guide/core-concepts.md).
 
 ## Explore the docs
 
@@ -36,8 +36,7 @@ AST/CST helpers — deliberately compact rather than a compiler framework.
     Every install path (ASDF, Quicklisp, Ultralisp, or a Nix checkout), and
     the verification commands that prove a checkout is release-ready.
 
-    [:octicons-arrow-right-24: Installation](installation.md) ·
-    [Quick Start](quick-start.md)
+    [:octicons-arrow-right-24: Getting Started](getting-started.md)
 
 -   :material-book-open-variant:{ .lg .middle } &nbsp; **Writing Parsers**
 
@@ -47,9 +46,9 @@ AST/CST helpers — deliberately compact rather than a compiler framework.
     behind the public surface, plus the recommended composition and upgrade
     patterns for real grammars.
 
-    [:octicons-arrow-right-24: Core Concepts](core-concepts.md) ·
-    [Parsing Patterns](parsing-patterns.md) ·
-    [Examples](examples.md)
+    [:octicons-arrow-right-24: Core Concepts](guide/core-concepts.md) ·
+    [Parsing Patterns](guide/parsing-patterns.md) ·
+    [Examples](guide/examples.md)
 
 -   :material-file-tree-outline:{ .lg .middle } &nbsp; **Reference**
 
@@ -58,9 +57,9 @@ AST/CST helpers — deliberately compact rather than a compiler framework.
     The full exported surface grouped by concern, the layer model and
     dependency direction, and the remaining public-facing roadmap.
 
-    [:octicons-arrow-right-24: API Reference](api-reference.md) ·
-    [Compatibility](compatibility.md) ·
-    [Architecture](architecture.md)
+    [:octicons-arrow-right-24: API Reference](reference/api.md) ·
+    [Compatibility](reference/compatibility.md) ·
+    [Architecture](reference/architecture.md)
 
 -   :material-shield-check-outline:{ .lg .middle } &nbsp; **Project**
 
@@ -69,8 +68,8 @@ AST/CST helpers — deliberately compact rather than a compiler framework.
     The `nix flake check` gate and the raw-checkout entry points, the roadmap,
     and the release history.
 
-    [:octicons-arrow-right-24: Development](development.md) ·
-    [Roadmap](roadmap.md) ·
+    [:octicons-arrow-right-24: Development](project/development.md) ·
+    [Roadmap](project/roadmap.md) ·
     [Releases](https://github.com/nerima-lisp/cl-parser-kit/releases)
 
 </div>
@@ -97,30 +96,32 @@ usable. The current codebase includes:
   workflows
 
 The implementation is designed to stay small enough that the behavior is
-easy to audit from the tests. See [Architecture](architecture.md) for the
-layer model and [Roadmap](roadmap.md) for the remaining public-facing work.
+easy to audit from the tests. See [Architecture](reference/architecture.md) for the
+layer model and [Roadmap](project/roadmap.md) for the remaining public-facing work.
 
 ## Guide Map
 
-- [Installation](installation.md) — ASDF, Quicklisp, Ultralisp, and Nix
-  install paths, plus the verification commands for a release-ready
-  checkout.
-- [Quick Start](quick-start.md) — tokenizing, parser combinators, Pratt
-  parsing, seq helpers, diagnostics, and CST output in runnable snippets.
-- [Core Concepts](core-concepts.md) — tokens, spans, tokenizers, the parser
+- [Getting Started](getting-started.md) — ASDF, Quicklisp, Ultralisp, and Nix
+  install paths, the verification commands for a release-ready checkout, and
+  the first runnable tokenizer and parser.
+- [Recipes](guide/recipes.md) — parser combinators, Pratt parsing, seq helpers,
+  lookahead, operator chains, and CST output in runnable snippets.
+- [Diagnostics](guide/diagnostics.md) — rendering a parse failure with source
+  excerpts, and building a diagnostic by hand.
+- [Core Concepts](guide/core-concepts.md) — tokens, spans, tokenizers, the parser
   layer, the Pratt layer, diagnostics, and AST/CST helpers.
-- [Parsing Patterns](parsing-patterns.md) — how to choose the smallest
+- [Parsing Patterns](guide/parsing-patterns.md) — how to choose the smallest
   stable layer for a grammar, the committed-failure contract, and how to
   upgrade an existing hand-written parser.
-- [Examples](examples.md) — a map of every sample file under `examples/`
+- [Examples](guide/examples.md) — a map of every sample file under `examples/`
   and the recommended reading order.
-- [API Reference](api-reference.md) — the exported surface grouped by concern, with
+- [API Reference](reference/api.md) — the exported surface grouped by concern, with
   the common entry point for each layer.
-- [Architecture](architecture.md) — the layer model and dependency
+- [Architecture](reference/architecture.md) — the layer model and dependency
   direction.
-- [Roadmap](roadmap.md) — the near-term, mid-term, and explicit non-goals.
-- [Compatibility](compatibility.md) — what `v1.0.0` froze and what it did not.
-- [Development](development.md) — the `nix flake check` gate and the raw-checkout
+- [Roadmap](project/roadmap.md) — the near-term, mid-term, and explicit non-goals.
+- [Compatibility](reference/compatibility.md) — what `v1.0.0` froze and what it did not.
+- [Development](project/development.md) — the `nix flake check` gate and the raw-checkout
   entry points.
 
 ## Design Non-Goals
@@ -173,8 +174,8 @@ repository, so they are not duplicated here:
 
 Repository-specific:
 
-- [Compatibility](compatibility.md) — what the public surface promises.
-- [Development](development.md) — the gate, the entry points, releasing.
+- [Compatibility](reference/compatibility.md) — what the public surface promises.
+- [Development](project/development.md) — the gate, the entry points, releasing.
 - Pull request queue: <https://github.com/nerima-lisp/cl-parser-kit/pulls>
 - Issue tracker: <https://github.com/nerima-lisp/cl-parser-kit/issues>
 - Release notes: <https://github.com/nerima-lisp/cl-parser-kit/releases>

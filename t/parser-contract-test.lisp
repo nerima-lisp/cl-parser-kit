@@ -148,7 +148,7 @@
                         (list "perl"
                               "-ne"
                               "if (/^```/) { $in = !$in; next } next if $in; while (/`([^`]+)`/g) { print lc($1), qq(\\n) }"
-                              (namestring (parser-project-file-path "docs/src/api-reference.md")))
+                              (namestring (parser-project-file-path "docs/src/reference/api.md")))
                         :output :string)
                        :separator '(#\Newline))))
          (exported

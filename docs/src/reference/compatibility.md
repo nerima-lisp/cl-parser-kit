@@ -27,7 +27,7 @@ major release and nothing else.
 
 What is frozen is every symbol exported from the `cl-parser-kit` package: its
 name, its documented arguments, and its documented behavior. As of `v1.0.0`
-that is 290 symbols, each documented in the [API Reference](api-reference.md)
+that is 290 symbols, each documented in the [API Reference](api.md)
 and, since `v1.0.0`, from the running image as well — `t/api-surface-test.lisp`
 enforces both, so an undocumented export fails CI rather than shipping.
 
