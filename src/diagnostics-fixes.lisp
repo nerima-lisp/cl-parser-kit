@@ -67,20 +67,30 @@ then emits them in their original relative order)."
           (setf cursor end)))
       (write-string source out :start cursor))))
 
+(defstruct (piece (:constructor %make-piece (kind text start end)))
+  "A slice [START, END) of TEXT, tagged with its provenance -- KIND is :SOURCE
+for a run of the untouched input or :TEXT for a fix-it's replacement.
+%APPLY-SEQUENTIAL-FIXES's internal representation while splicing fixes into a
+still-unwritten piece list; never escapes diagnostics-fixes.lisp."
+  kind
+  text
+  start
+  end)
+
 (defun %piece-length (piece)
-  (- (fourth piece) (third piece)))
+  (- (piece-end piece) (piece-start piece)))
 
 (defun %make-text-piece (text)
   (let ((length (length text)))
     (unless (zerop length)
-      (list :text text 0 length))))
+      (%make-piece :text text 0 length))))
 
 (defun %piece-slice (piece start end)
   (when (< start end)
-    (list (first piece)
-          (second piece)
-          (+ (third piece) start)
-          (+ (third piece) end))))
+    (%make-piece (piece-kind piece)
+                 (piece-text piece)
+                 (+ (piece-start piece) start)
+                 (+ (piece-start piece) end))))
 
 (defun %replace-piece-range (pieces start end replacement)
   (let ((replacement-piece (%make-text-piece replacement))
@@ -117,10 +127,10 @@ then emits them in their original relative order)."
 (defun %pieces->string (pieces)
   (with-output-to-string (out)
     (dolist (piece pieces)
-      (write-string (second piece) out :start (third piece) :end (fourth piece)))))
+      (write-string (piece-text piece) out :start (piece-start piece) :end (piece-end piece)))))
 
 (defun %apply-sequential-fixes (source ordered-fixes)
-  (let ((pieces (list (list :source source 0 (length source))))
+  (let ((pieces (list (%make-piece :source source 0 (length source))))
         (current-length (length source)))
     (dolist (fix ordered-fixes (%pieces->string pieces))
       (let ((replacement (or (fix-it-replacement fix) "")))
