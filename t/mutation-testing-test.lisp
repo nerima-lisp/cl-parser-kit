@@ -67,7 +67,7 @@
                         (equal (%merge-pair-snapshot) expected-outputs)
                       (error () nil))))))
            ;; Sanity check that mutation actually ran, not a vacuous pass.
-           (expect (plusp (length results)) :to-be-truthy)
+           (expect (consp results) :to-be-truthy)
            (assert-mutation-score results 1.0))
       (eval original-form))))
 
@@ -118,6 +118,6 @@
                     (handler-case
                         (equal (%region-conflicts-snapshot) expected-outputs)
                       (error () nil))))))
-           (expect (plusp (length results)) :to-be-truthy)
+           (expect (consp results) :to-be-truthy)
            (assert-mutation-score results 1.0))
       (eval original-form))))

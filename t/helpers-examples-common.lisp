@@ -14,7 +14,7 @@
   (project-file-path name))
 
 (defun file-contents (path)
-  (with-open-file (stream path :direction :input)
+  (with-open-file (stream path)
     (with-output-to-string (output)
       (loop for line = (read-line stream nil nil)
             while line
