@@ -44,13 +44,13 @@
     # followed: it pins v0.3.0, and forcing v0.4.0 on it would build the
     # released cl-weave with a preset it was never released against.
     cl-weave = {
-      url = "github:nerima-lisp/cl-weave/v1.1.4";
+      url = "github:nerima-lisp/cl-weave/v1.3.0";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.paredit-cli.follows = "paredit-cli";
       inputs.treefmt-nix.follows = "treefmt-nix";
     };
     cl-prolog = {
-      url = "github:nerima-lisp/cl-prolog/v1.3.0";
+      url = "github:nerima-lisp/cl-prolog/v1.4.3";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.cl-weave.follows = "cl-weave";
       inputs.paredit-cli.follows = "paredit-cli";
@@ -61,7 +61,7 @@
     # Lisp sources: a dev-shell binary for agent-driven refactors, and the
     # `checks.paredit-lint` gate below built from the same library.
     paredit-cli = {
-      url = "github:nerima-lisp/paredit-cli/v1.4.0";
+      url = "github:nerima-lisp/paredit-cli/v1.5.0";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
