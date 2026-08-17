@@ -27,7 +27,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # cl-weave and cl-prolog are the test-only dependencies of the
+    # cl-weave and cl-prolog-kit are the test-only dependencies of the
     # `cl-parser-kit/test` system (see cl-parser-kit.asd `:depends-on`).
     #
     # Both are full flakes now, where they used to be `flake = false` source
@@ -49,8 +49,8 @@
       inputs.paredit-cli.follows = "paredit-cli";
       inputs.treefmt-nix.follows = "treefmt-nix";
     };
-    cl-prolog = {
-      url = "github:nerima-lisp/cl-prolog/v1.4.3";
+    cl-prolog-kit = {
+      url = "github:nerima-lisp/cl-prolog-kit/v1.5.0";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.cl-weave.follows = "cl-weave";
       inputs.paredit-cli.follows = "paredit-cli";
@@ -82,7 +82,7 @@
       nixpkgs,
       cl-nix-forge,
       cl-weave,
-      cl-prolog,
+      cl-prolog-kit,
       paredit-cli,
       treefmt-nix,
     }:
@@ -105,32 +105,32 @@
       # cl-weave as an ASDF SYSTEM, for `lispCheckDependencies`.
       #
       # Taken straight off the flake rather than rebuilt from its source with
-      # `lispDerivation`, which is what cl-json-kit and cl-prolog still do:
+      # `lispDerivation`, which is what cl-json-kit and cl-prolog-kit still do:
       # v1.1.0 is migrated, so `packages.<system>.cl-weave` IS the
       # registry-composable ASDF system. (`packages.default` is a different
       # thing -- the delivered CLI binary -- and is not what belongs here.)
       clWeaveSystem = ctx: cl-weave.packages.${ctx.system}.cl-weave;
 
-      # cl-prolog as an ASDF SYSTEM. Built from the input's source because
+      # cl-prolog-kit as an ASDF SYSTEM. Built from the input's source because
       # v1.1.0 predates its own migration: it has no `cl-nix-forge` input at
-      # all, so there is no `packages.cl-prolog` attribute to consume.
+      # all, so there is no `packages.cl-prolog-kit` attribute to consume.
       #
-      # `cl-prolog/weave` and not `cl-prolog`: that is the system
+      # `cl-prolog-kit/weave` and not `cl-prolog-kit`: that is the system
       # cl-parser-kit.asd names, so building it is what validates the thing
       # actually needed. The derivation still carries the whole source tree,
       # so the other systems in the same .asd stay resolvable.
       clPrologSystem =
         ctx:
         ctx.cl.lispDerivation {
-          pname = "cl-prolog";
-          version = ctx.cl.fromAsdSystem "${cl-prolog}/cl-prolog.asd";
-          src = cl-prolog;
-          lispSystem = "cl-prolog/weave";
+          pname = "cl-prolog-kit";
+          version = ctx.cl.fromAsdSystem "${cl-prolog-kit}/cl-prolog-kit.asd";
+          src = cl-prolog-kit;
+          lispSystem = "cl-prolog-kit/weave";
           lispDependencies = [ (clWeaveSystem ctx) ];
         };
 
       # scripts/bootstrap.lisp does NOT use `asdf:load-system` for cl-weave
-      # and cl-prolog: it reads their `.asd` `defsystem` forms and `load`s the
+      # and cl-prolog-kit: it reads their `.asd` `defsystem` forms and `load`s the
       # listed source files itself. So it never consults CL_SOURCE_REGISTRY,
       # and cl-nix-forge composing that registry transitively -- correct as it
       # is, and what makes `lispCheckDependencies` above worth declaring --
@@ -147,7 +147,7 @@
       # gain -- bootstrap loads `.lisp` files, never fasls.
       dependencyRoots = {
         CL_PARSER_KIT_CL_WEAVE_ROOT = "${cl-weave}";
-        CL_PARSER_KIT_CL_PROLOG_ROOT = "${cl-prolog}";
+        CL_PARSER_KIT_CL_PROLOG_KIT_ROOT = "${cl-prolog-kit}";
       };
 
       # `nix run .#test`, and through `apps.default` the README's headline
@@ -320,7 +320,7 @@
       treefmt.evalModule = treefmt-nix.lib.evalModule;
 
       # The interactive-only extras, and only those. sbcl, cl-weave and
-      # cl-prolog all arrive through `inputsFrom` on the derivation the preset
+      # cl-prolog-kit all arrive through `inputsFrom` on the derivation the preset
       # builds this shell from -- the CHECK-ENABLED one, whose `registryPath`
       # carries `lispCheckDependencies` -- so naming any of them again here
       # would be a second source of truth. Verified with

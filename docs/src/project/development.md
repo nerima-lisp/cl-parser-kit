@@ -45,11 +45,11 @@ Tests live in `t/` and run under
 `scripts/bootstrap.lisp` loads the project and its two test dependencies by
 reading the `.asd` forms directly, so the suite runs from a raw checkout
 without an ASDF source registry. Point it at the dependencies either by placing
-`cl-weave` and `cl-prolog` next to this checkout, or by setting:
+`cl-weave` and `cl-prolog-kit` next to this checkout, or by setting:
 
 ```sh
 export CL_PARSER_KIT_CL_WEAVE_ROOT=/path/to/cl-weave
-export CL_PARSER_KIT_CL_PROLOG_ROOT=/path/to/cl-prolog
+export CL_PARSER_KIT_CL_PROLOG_KIT_ROOT=/path/to/cl-prolog-kit
 
 sbcl --script run-tests.lisp
 ```
