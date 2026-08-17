@@ -72,7 +72,7 @@ nix fmt              # format Nix sources (treefmt)
 Tests live in `t/` and run under
 [cl-weave](https://github.com/nerima-lisp/cl-weave), the org's test framework;
 parser-table invariants are additionally checked as executable
-[cl-prolog](https://github.com/nerima-lisp/cl-prolog) queries. The suite also
+[cl-prolog-kit](https://github.com/nerima-lisp/cl-prolog-kit) queries. The suite also
 runs from a raw checkout without Nix:
 
 ```sh

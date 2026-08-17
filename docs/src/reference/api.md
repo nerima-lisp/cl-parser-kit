@@ -627,7 +627,7 @@ AST and CST helpers keep tree-shaped output simple and explicit.
 
 ## Testing
 
-The repository test system runs on `cl-weave`, with `cl-prolog/weave`
+The repository test system runs on `cl-weave`, with `cl-prolog-kit/weave`
 providing declarative contract checks for parser behavior.
 
 - primary entry point: `asdf:test-system "cl-parser-kit-test"`

@@ -18,21 +18,21 @@
   (ecase fixity
     (:prefix
      (let ((entry (gethash key (pratt-table-prefixes table))))
-       (cl-prolog:make-clause
+       (cl-prolog-kit:make-clause
         `(operator ,key :prefix
                    ,(cl-parser-kit::pratt-prefix-entry-binding-power entry)
                    ,(cl-parser-kit::pratt-prefix-entry-binding-power entry))
         nil)))
     (:infix
      (let ((entry (gethash key (pratt-table-infixes table))))
-       (cl-prolog:make-clause
+       (cl-prolog-kit:make-clause
         `(operator ,key :infix
                    ,(cl-parser-kit::pratt-infix-entry-left-binding-power entry)
                    ,(cl-parser-kit::pratt-infix-entry-right-binding-power entry))
         nil)))
     (:postfix
      (let ((entry (gethash key (pratt-table-postfixes table))))
-       (cl-prolog:make-clause
+       (cl-prolog-kit:make-clause
         `(operator ,key :postfix
                    ,(cl-parser-kit::pratt-postfix-entry-binding-power entry)
                    ,(cl-parser-kit::pratt-postfix-entry-binding-power entry))
@@ -47,12 +47,12 @@
                  (%pratt-operator-clause table :bang :postfix)))
          (contract-clauses
            (list
-            (cl-prolog:make-clause '(associativity :plus :left) nil)
-            (cl-prolog:make-clause '(associativity :star :left) nil)
-            (cl-prolog:make-clause '(precedence-edge :bang :star) nil)
-            (cl-prolog:make-clause '(precedence-edge :star :plus) nil))))
+            (cl-prolog-kit:make-clause '(associativity :plus :left) nil)
+            (cl-prolog-kit:make-clause '(associativity :star :left) nil)
+            (cl-prolog-kit:make-clause '(precedence-edge :bang :star) nil)
+            (cl-prolog-kit:make-clause '(precedence-edge :star :plus) nil))))
     (let ((rulebase
-            (cl-prolog:prolog
+            (cl-prolog-kit:prolog
               ((higher-priority ?higher ?lower)
                (precedence-edge ?higher ?lower))
               ((higher-priority ?higher ?lower)
@@ -62,9 +62,9 @@
                (operator ?operator :infix ?left-binding ?right-binding)
                (associativity ?operator :left)))))
       (dolist (clause (append operator-clauses contract-clauses) rulebase)
-        (cl-prolog:rulebase-insert-clause! rulebase clause)))))
+        (cl-prolog-kit:rulebase-insert-clause! rulebase clause)))))
 
-(cl-prolog/weave:deftest-queries pratt-relational-contracts
+(cl-prolog-kit/weave:deftest-queries pratt-relational-contracts
     ((%make-pratt-contract-rulebase))
   ("projects the registered Pratt table as relational data"
    (operator ?operator ?fixity ?left ?right)

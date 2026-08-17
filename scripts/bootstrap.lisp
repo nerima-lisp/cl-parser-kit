@@ -6,8 +6,8 @@
 
 (defparameter *test-dependency-specs*
   '(("CL_PARSER_KIT_CL_WEAVE_ROOT" "cl-weave" "cl-weave.asd" ("cl-weave"))
-    ("CL_PARSER_KIT_CL_PROLOG_ROOT" "cl-prolog" "cl-prolog.asd"
-     ("cl-prolog" "cl-prolog/weave"))))
+    ("CL_PARSER_KIT_CL_PROLOG_KIT_ROOT" "cl-prolog-kit" "cl-prolog-kit.asd"
+     ("cl-prolog-kit" "cl-prolog-kit/weave"))))
 
 (defun current-project-root ()
   *project-root*)

@@ -1,7 +1,7 @@
 # Getting Started
 
 The library system (`cl-parser-kit`) has **no runtime dependencies** — only
-the test system (`cl-parser-kit-test`) pulls in `cl-weave` and `cl-prolog`.
+the test system (`cl-parser-kit-test`) pulls in `cl-weave` and `cl-prolog-kit`.
 Loading it into an application never drags in the test tooling.
 
 ## ASDF
@@ -56,11 +56,11 @@ To load the repository test system explicitly:
 (asdf:load-system :cl-parser-kit-test)
 ```
 
-The test system depends on `cl-weave` and `cl-prolog`, which are not
+The test system depends on `cl-weave` and `cl-prolog-kit`, which are not
 distributed through Quicklisp/Ultralisp; the Nix dev shell (`nix develop`)
 and `nix flake check` resolve the pinned versions automatically. Outside
 Nix, make matching checkouts of [`cl-weave`](https://github.com/nerima-lisp/cl-weave)
-and [`cl-prolog`](https://github.com/nerima-lisp/cl-prolog) discoverable by
+and [`cl-prolog-kit`](https://github.com/nerima-lisp/cl-prolog-kit) discoverable by
 ASDF (see [`scripts/bootstrap.lisp`](https://github.com/nerima-lisp/cl-parser-kit/blob/main/scripts/bootstrap.lisp)
 for the exact roots it expects). Running the library itself never requires
 these.
@@ -73,7 +73,7 @@ From a repository checkout on a supported system, run the full suite with:
 nix flake check
 ```
 
-This resolves the pinned `cl-weave` and `cl-prolog` test dependencies, runs
+This resolves the pinned `cl-weave` and `cl-prolog-kit` test dependencies, runs
 the full suite, generates the coverage report, and checks Lisp structure
 with `paredit-cli`.
 

@@ -91,7 +91,7 @@ usable. The current codebase includes:
 - exported resource-limit specials so hostile input fails gracefully instead
   of exhausting memory or the control stack
 - a test system wired into `asdf:test-system`, with parser-table invariants
-  additionally checked as executable `cl-prolog/weave` queries
+  additionally checked as executable `cl-prolog-kit/weave` queries
 - runnable examples under `examples/`, regression-tested as user-facing
   workflows
 
@@ -137,11 +137,11 @@ The [flake.nix](https://github.com/nerima-lisp/cl-parser-kit/blob/main/flake.nix
 at the repository root packages `cl-parser-kit` as a Nix flake:
 
 - `nix develop` — a devShell with SBCL and Perl, with `CL_PARSER_KIT_CL_WEAVE_ROOT`
-  and `CL_PARSER_KIT_CL_PROLOG_ROOT` pre-wired to the pinned test dependencies,
+  and `CL_PARSER_KIT_CL_PROLOG_KIT_ROOT` pre-wired to the pinned test dependencies,
   and [`paredit-cli`](https://github.com/nerima-lisp/paredit-cli) for structural
   S-expression lint checks.
 - `nix flake check` — the full reproducible CI gate: the library package
-  build, the `cl-weave`/`cl-prolog` test suite, the 90%/80% coverage gate,
+  build, the `cl-weave`/`cl-prolog-kit` test suite, the 90%/80% coverage gate,
   `paredit-lint`, the `nixfmt` formatting gate, and the `--strict` docs
   build, for `x86_64-linux`, `aarch64-linux`, and `aarch64-darwin`.
 - `nix build .#docs` — builds this documentation site with MkDocs (Material)

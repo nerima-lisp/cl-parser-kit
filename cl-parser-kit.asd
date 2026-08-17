@@ -16,7 +16,7 @@
   :source-control (:git "https://github.com/nerima-lisp/cl-parser-kit.git")
   ;; DEPENDENCY_POLICY.md places this package at L1 (general-purpose
   ;; utility): the runtime system depends on nothing outside the standard.
-  ;; cl-weave and cl-prolog are test-only and belong to cl-parser-kit/test.
+  ;; cl-weave and cl-prolog-kit are test-only and belong to cl-parser-kit/test.
   :depends-on ()
   :pathname "src"
   :serial t
@@ -67,7 +67,7 @@
   :homepage "https://github.com/nerima-lisp/cl-parser-kit"
   :bug-tracker "https://github.com/nerima-lisp/cl-parser-kit/issues"
   :source-control (:git "https://github.com/nerima-lisp/cl-parser-kit.git")
-  :depends-on ("cl-parser-kit" "cl-weave" "cl-prolog/weave")
+  :depends-on ("cl-parser-kit" "cl-weave" "cl-prolog-kit/weave")
   :pathname "t"
   :serial t
   :components
