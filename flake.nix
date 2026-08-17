@@ -119,7 +119,7 @@
       # cl-parser-kit.asd names, so building it is what validates the thing
       # actually needed. The derivation still carries the whole source tree,
       # so the other systems in the same .asd stay resolvable.
-      clPrologSystem =
+      clPrologKitSystem =
         ctx:
         ctx.cl.lispDerivation {
           pname = "cl-prolog-kit";
@@ -257,7 +257,7 @@
       # is cl-nix-forge's job and it does it transitively.
       lispCheckDependencies = ctx: [
         (clWeaveSystem ctx)
-        (clPrologSystem ctx)
+        (clPrologKitSystem ctx)
       ];
 
       # Everything outside `lispDerivation`'s own argument list reaches
