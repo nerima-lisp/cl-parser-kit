@@ -1,8 +1,6 @@
 (in-package :cl-parser-kit/test)
 
-;;; Property-based coverage of parser invariants. These exercise cl-weave's
-;;; generator DSL (`it-property`) to assert structural laws that must hold for
-;;; every generated input, complementing the fixed example-based tests.
+;;; Property-based checks for parser invariants.
 
 (defun %identifier-token (name)
   (make-token :type :identifier :text name))
@@ -183,11 +181,8 @@
       (expect (%add-node-count value) :to-equal (1- operands))
       (expect (%leftmost-leaf value) :to-equal 1))))
 
-;;; The combinator engine funnels every sub-parser call through RUN-PARSER, so
-;;; a *MAXIMUM-PARSER-RECURSION-DEPTH* guard there protects both ordinary
-;;; recursive-descent grammars (nested delimiters below) and CHAINR1, whose
-;;; right-recursion bypasses RUN-PARSER and needs its own explicit check
-;;; (security hardening).
+;;; CHAINR1 recurses outside RUN-PARSER, so it needs its own recursion guard;
+;;; nested delimiters exercise the guard in RUN-PARSER.
 
 (defun %nested-paren-tokens (depth)
   (coerce (append (loop repeat depth collect (make-token :type :lparen :text "("))

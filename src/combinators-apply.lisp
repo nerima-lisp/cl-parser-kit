@@ -1,12 +1,6 @@
 (in-package :cl-parser-kit)
 
-;;;; Applicative-style combinators and source-span capture.
-;;;;
-;;;; SEQ-MAP / PICK lift a function over SEQ's result list so callers rarely
-;;;; need to destructure it by hand. SPANNING bridges the token stream's span
-;;;; metadata into whatever value a sub-parser produces, which is the piece
-;;;; most needed when building AST/CST nodes that must remember their source
-;;;; location.
+;;;; Applicative combinators and source-span capture.
 
 (defparameter *maximum-parser-apply-arity* 256
   "Maximum number of positional values SEQ-MAP expands into one function call.

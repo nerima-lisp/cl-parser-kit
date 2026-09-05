@@ -59,13 +59,7 @@ if?")
      "`parse-pratt`"
      "`parse-pratt-source`"
      "End-to-end entry points intentionally stay small"))
-  "Per-document required-snippet fixture table for DOCUMENT-REQUIRED-SNIPPETS,
-kept apart from the lookup so the data itself -- what each doc must
-contain -- reads as a table, not a dispatch chain.
-
-Contribution, conduct, governance, support, security and maintainer policy are
-org-wide files served from nerima-lisp/.github, so this repository no longer
-ships copies of them and there is nothing here to assert about them.")
+  "Per-document required-snippet fixture table for DOCUMENT-REQUIRED-SNIPPETS.")
 
 (defun document-required-snippets (document)
   (or (cdr (assoc document *document-required-snippets* :test #'string=))
@@ -85,8 +79,4 @@ ships copies of them and there is nothing here to assert about them.")
     "docs/src/reference/architecture.md"
     "docs/src/project/development.md"
     "docs/src/project/roadmap.md")
-  "Every Markdown document this repository publishes, in nav order.
-
-CHANGELOG.md and docs/src/changelog.md were both removed by the 2026-08-01
-revision of PACKAGE_STANDARD.md: the GitHub Release description is now the
-only canonical changelog, so neither file exists to be published.")
+  "Every Markdown document this repository publishes, in nav order.")

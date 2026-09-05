@@ -1,14 +1,7 @@
 (in-package :cl-parser-kit)
 
-;;;; Operator-precedence expression builder (combinator layer).
-;;;;
-;;;; MAKE-EXPRESSION-PARSER turns an operator table into an ordinary parser, the
-;;;; combinator-layer counterpart to the token-keyed Pratt parser. It is built
-;;;; entirely on verified primitives -- CHAINL1 / CHAINR1 for the infix folding,
-;;;; MANY for repeated prefix/postfix operators, PARSE-LET* / OPT / ALT for the
-;;;; glue -- so it inherits their commitment model unchanged. Use it (rather than
-;;;; Pratt) when the operands and operators are themselves arbitrary parsers
-;;;; instead of single tokens keyed by type.
+;;;; Operator-precedence expression builder for arbitrary operand and operator
+;;;; parsers.
 
 (defun %expression-ops-of-kind (level kind)
   "The op-parsers in LEVEL tagged KIND, in order."

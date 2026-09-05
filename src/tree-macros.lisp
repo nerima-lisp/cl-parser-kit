@@ -1,10 +1,5 @@
 (in-package :cl-parser-kit)
 
-;;; SB-COVER attributes a macro's generated code to the call site (AST.LISP /
-;;; CST.LISP), not to this file, so this file's own coverage number stays low
-;;; regardless of how thoroughly the generated API is tested -- the two
-;;; DEFINE-TREE-NODE-FAMILY invocations are what actually run.
-
 (defun %tree-node-constructor-symbol (name)
   (intern (format nil "MAKE-~A"
                   (string-upcase (symbol-name name)))

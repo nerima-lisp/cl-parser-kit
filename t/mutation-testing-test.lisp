@@ -1,10 +1,7 @@
 (in-package :cl-parser-kit/test)
 
-;;; Mutation testing (advanced cl-weave usage): mutate the comparison/branch
-;;; logic in %MERGE-PARSE-FAILURE-PAIR one operator at a time and confirm the
-;;; assertion battery below kills every mutant. A survivor would mean some
-;;; observable behavior change slipped past the test suite -- exactly the
-;;; class of latent bug mutation testing exists to surface.
+;;; Mutate %MERGE-PARSE-FAILURE-PAIR's comparison branches; each mutant must
+;;; change an observable result.
 
 (defun %merge-parse-failure-pair-defun-form ()
   '(defun cl-parser-kit::%merge-parse-failure-pair (left right)
@@ -71,11 +68,8 @@
            (assert-mutation-score results 1.0))
       (eval original-form))))
 
-;;; A second mutation target: %FIX-IT-REGION-CONFLICTS-P's 4-comparison
-;;; or/and overlap guard (extracted from %NON-OVERLAPPING-FIX-IT-REGIONS in an
-;;; earlier readability pass). Same rationale as the merge-pair test above --
-;;; dense boundary-comparison logic is exactly where a single flipped operator
-;;; silently changes which fix-it edits get rejected as overlapping.
+;;; A second mutation target: the four-comparison overlap guard in
+;;; %FIX-IT-REGION-CONFLICTS-P. A flipped operator changes which edits overlap.
 
 (defun %fix-it-region-conflicts-p-defun-form ()
   '(defun cl-parser-kit::%fix-it-region-conflicts-p (start end previous-start previous-end)

@@ -26,15 +26,8 @@ my %adjusted_counts = (
 );
 my $current_directory = '';
 
-# SB-COVER attributes a macro's generated code to its call site, never to the
-# macro's own definition, so a file whose only content is a macro definition
-# (plus helpers used solely by that macro) reads as permanently 0% covered no
-# matter how thoroughly the code it generates is tested elsewhere -- verified
-# for these files by reading their content and confirming every generated
-# function has dedicated call-site tests (see docs/src/development.md, "Coverage
-# Expectations"). ADJUSTED-* below excludes exactly these files from the
-# denominator so the reported percentage reflects instrumentable code only;
-# the gate itself still runs against the raw, unadjusted totals.
+# SB-COVER attributes macro expansions to call sites. Exclude definition-only
+# macro files from the adjusted denominator; raw totals still gate the build.
 my %macro_attribution_artifact_files = map { $_ => 1 } (
   'tree-macros.lisp',
   'package.lisp',

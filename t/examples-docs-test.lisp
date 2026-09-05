@@ -1,9 +1,7 @@
 (in-package :cl-parser-kit/test)
 
-;;; mkdocs --strict already fails on a broken link between two pages under
-;;; docs/src/, but only for files it renders. This keeps the same guarantee for
-;;; README.md and CHANGELOG.md, which are read on GitHub and never pass through
-;;; MkDocs, and it fails in the test suite rather than in the docs build.
+;;; MkDocs checks rendered pages; this also checks published Markdown files it
+;;; does not render.
 (it-sequential "public-doc-links-resolve-test"
   (dolist (doc-name *published-documents*)
     (let ((missing '()))

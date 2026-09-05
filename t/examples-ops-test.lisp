@@ -40,23 +40,6 @@
 	     script
 	     '("driver_file=" "cat >\"$driver_file\"" "trap cleanup" "command_words"))))
 
-;;; scripts/run-release-audit.sh is gone, and with it the test that pinned its
-;;; contents. The audit existed to assert cross-references between root-level
-;;; policy documents (RELEASING -> SECURITY -> GOVERNANCE -> MAINTAINERS ...)
-;;; that nerima-lisp/.github now serves org-wide, and its remaining half --
-;;; "run the tests, the compile check and the examples" -- is what
-;;; `nix flake check` does with build caching and without a second copy of the
-;;; gate to keep in step.
-;;;
-;;; Its one non-duplicated assertion, that CHANGELOG.md keeps an Unreleased
-;;; section in Keep a Changelog form, lived here as
-;;; `changelog-follows-keep-a-changelog-format-test`. The 2026-08-01 revision
-;;; of PACKAGE_STANDARD.md abolished CHANGELOG.md outright -- the GitHub
-;;; Release description is now the only canonical changelog -- so there is no
-;;; file left to assert a format on and release.yml no longer extracts a
-;;; section from one. The test is deleted rather than adapted: nothing in this
-;;; tree is its subject any more.
-
 (it-sequential "timeout-wrapper-kills-process-groups-and-validates-timeout-test"
   (let ((script (repository-file-contents "scripts/with-timeout.pl")))
     (dolist (needle '("TIMEOUT must be a positive integer"

@@ -8,13 +8,6 @@
 ;; malformed or hostile input rather than being compiled away.
 (declaim (optimize (speed 3) (safety 1)))
 
-;; Called only from DEFINE-RESOURCE-LIMIT-CONDITION's own macro body (below),
-;; so every invocation happens at macroexpansion time -- compiling whichever
-;; file calls DEFINE-RESOURCE-LIMIT-CONDITION -- never at program-execution
-;; time; SB-COVER's runtime instrumentation cannot observe that regardless of
-;; how many callers exist. The same category as the macro-internal-control-flow
-;; pattern documented in docs/src/project/development.md, just via a helper DEFUN rather than
-;; inline LET/LOOP forms.
 (defun %resource-limit-reader-symbol (name slot)
   (intern (format nil "~A-~A" (string-upcase (symbol-name name)) (string-upcase (symbol-name slot)))
           (symbol-package name)))

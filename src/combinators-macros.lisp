@@ -1,11 +1,6 @@
 (in-package :cl-parser-kit)
 
-;;;; Ergonomic macros: monadic do-notation and lazy/recursive parser definition.
-;;;;
-;;;; The runtime work lives in ordinary functions (%LAZY-PARSER) so it stays
-;;;; testable and observable; the macros are thin templates over them.
-;;;; PARSE-LET* expands to nested BIND-PARSER calls, so it inherits BIND-PARSER's
-;;;; commit semantics for free.
+;;;; Parser-definition and monadic binding macros.
 
 (defun %lazy-parser (builder)
   "Runtime core of PARSER-LAZY / DEFPARSER.

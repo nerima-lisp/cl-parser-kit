@@ -9,13 +9,8 @@ delegates to INNER -- to observe how often a position is (re)parsed."
          (incf (first counter-box))
          (run-parser inner input position))))
 
-;;; A directly left-recursive grammar, written the same way PARSER-LAZY's own
-;;; docstring example builds a recursive grammar -- a DEFPARAMETER referencing
-;;; itself through (PARSER-LAZY variable) -- except the self-reference comes
-;;; first in the SEQ instead of after a token is consumed. Every visit to this
-;;; single, stable MEMOIZE-wrapped parser object immediately revisits itself at
-;;; the very same position, before ever reaching the TYPE-TOKEN :NUM that would
-;;; consume input.
+;;; Direct left recursion re-enters the same memoized parser at the same
+;;; position before consuming the TYPE-TOKEN :NUM.
 (defparameter %memoize-left-recursive-number
   (memoize (seq (parser-lazy %memoize-left-recursive-number) (type-token :num))))
 

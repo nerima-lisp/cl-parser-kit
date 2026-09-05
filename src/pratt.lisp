@@ -52,12 +52,6 @@ PARSE-PRATT, PARSE-PRATT-ALL, or PARSE-PRATT-SOURCE."
   infixes
   postfixes)
 
-;;; As with DEFINE-TREE-NODE-FAMILY (see TREE-MACROS.LISP), SB-COVER attributes
-;;; each generated REGISTER-*-OPERATOR's body to its call site below, not to
-;;; this macro -- REGISTER-PREFIX-OPERATOR and friends are exercised
-;;; extensively (t/pratt-*-test.lisp, t/parser-properties-test.lisp), so this
-;;; file's low own-file coverage number is a reporting artifact, not a gap.
-
 (defmacro define-pratt-register-operator (name table-accessor constructor &rest slots)
   "Define NAME as the registrar storing a CONSTRUCTOR entry, built from SLOTS,
 under a token type in TABLE-ACCESSOR's table.

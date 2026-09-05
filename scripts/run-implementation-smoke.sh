@@ -10,10 +10,6 @@ compile_check_script="$project_root/scripts/run-compile-check.lisp"
 run_tests_script="$project_root/run-tests.lisp"
 run_examples_script="$project_root/scripts/run-examples.lisp"
 
-# Historical note: an earlier variant generated a driver that did
-# `(load #p".../run-tests.lisp")`. The smoke path now invokes
-# the checked-in verification entrypoints directly for each implementation.
-
 have_command() {
   command -v "$1" >/dev/null 2>&1
 }

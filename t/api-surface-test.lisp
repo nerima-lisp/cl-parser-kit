@@ -1,18 +1,6 @@
 (in-package :cl-parser-kit/test)
 
-;;;; The v1.0.0 public-surface contract.
-;;;;
-;;;; Every exported symbol is frozen under semantic versioning from v1.0.0 on,
-;;;; so two properties have to hold for the package as a whole rather than
-;;;; symbol by symbol: nothing is exported that has no definition, and nothing
-;;;; is exported that a user cannot look up from the running image.
-;;;;
-;;;; The second check is not hypothetical. DEFINE-PARSER-FUNCTION used to
-;;;; splice its whole BODY -- docstring included -- into the inner
-;;;; (LAMBDA (INPUT POSITION) ...), so 14 hand-written combinator docstrings
-;;;; landed on an anonymous closure and DOCUMENTATION returned NIL for the
-;;;; combinator a caller actually names. Nothing detected that for the entire
-;;;; 0.x line, because nothing looked.
+;;;; Public API invariants.
 
 (defun %api-external-symbols ()
   "Every external symbol of :CL-PARSER-KIT, sorted by name for stable reporting."
@@ -106,9 +94,6 @@ how that is recognized rather than waived."
     (expect (length (remove-duplicates symbols)) :to-equal (length symbols))))
 
 (it-sequential "define-parser-function-hoists-its-docstring-onto-the-function-test"
-  ;; The specific regression: a docstring at the head of the body documents the
-  ;; combinator, not the inner :FN closure. TRACE-PARSER is the longest-standing
-  ;; instance, and MANY covers a form whose body is a single call.
   (with-soft-assertions
     (dolist (name '(trace-parser many opt attempt memoize skip-until))
       (expect (documentation name 'function) :to-be-truthy))))
@@ -119,8 +104,6 @@ how that is recognized rather than waived."
 Reads the expansion rather than defining and describing a throwaway parser,
 because the distinction under test is a macroexpansion-time one: whether the
 leading string ends up in the DEFUN's docstring position at all."
-  ;; (DEFUN name lambda-list [docstring] body...) -- the docstring, when the
-  ;; macro hoists one, is the fourth element, right after the lambda list.
   (let ((expansion (macroexpand-1 form)))
     (and (eq 'defun (first expansion))
          (stringp (fourth expansion))

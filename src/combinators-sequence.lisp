@@ -10,12 +10,7 @@
                                     (parse-failure-diagnostics failure)))))
 
 (defun %collect-many/cps (parser input current values diagnostics)
-  "Same match-until-failure loop %RUN-PROGRESSING-PARSER/CPS's CPS callers
-elsewhere in this library express as self-recursion through two fresh
-closures per iteration; written as a plain LOOP instead specifically because
-this is MANY's hot inner loop -- one iteration per matched token -- so
-avoiding a per-iteration closure allocation here is worth the departure from
-the CPS house style everywhere else in this file."
+  "Collect successive PARSER results until it fails or stops progressing."
   (loop
     (multiple-value-bind (ok value next result)
         (%run-parser-on-token-vector parser input current)
@@ -37,14 +32,6 @@ the CPS house style everywhere else in this file."
    (lambda (result failed-next)
      (declare (ignore failed-next))
      (%recoverable-success fallback-value position nil result))))
-
-;;; As with DEFINE-TREE-NODE-FAMILY (see TREE-MACROS.LISP) and
-;;; DEFINE-PRATT-REGISTER-OPERATOR (see PRATT.LISP), SB-COVER attributes each
-;;; DEFINE-SEPARATED-PARSER / DEFINE-CHAIN-PARSER expansion's body to its call
-;;; site below, not to the macro definitions here -- SEP-BY/SEP-BY1/
-;;; SEP-END-BY/SEP-END-BY1/CHAINL1/CHAINR1 are exercised extensively
-;;; (t/combinators-separator-test.lisp, t/combinators-chain-test.lisp), so
-;;; these two macro bodies showing as uncovered is a reporting artifact.
 
 (defmacro define-separated-parser (name &rest options)
   "Define NAME as %MAKE-SEPARATED-PARSER with OPTIONS fixed.
@@ -90,15 +77,6 @@ result would be accepted downstream as a valid but meaningless parse."
   (let ((parser-name (intern (symbol-name name) :keyword)))
     (ecase recursion-style
       (:left
-       ;; A plain LOOP rather than the self-recursive-through-closures CPS
-       ;; shape used elsewhere in this file, for the same reason as
-       ;; %COLLECT-MANY/CPS (combinators-sequence.lisp): this is a hot
-       ;; per-operator loop, and a closure per iteration is allocation it can
-       ;; avoid entirely. %RUN-PROGRESSING-PARSER/CPS's own "succeeded but did
-       ;; not progress" failure case is reproduced explicitly via
-       ;; %PROGRESS-FAILURE-OBJECT below, for both PARSER's initial call and
-       ;; every OPERATOR/PARSER pair inside the loop, since the loop no longer
-       ;; delegates to that shared function.
        `(defun ,name (parser operator)
           ,(format nil "Parse one or more PARSER operands separated by OPERATOR, ~
 whose value must be a two-argument function, and fold them left-associatively: ~
@@ -190,13 +168,7 @@ defaulting instead of failing on zero operands.")
 
 (defun %collect-separated-items/cps (parser separator input current values diagnostics
                                     on-item-failure)
-  "A plain LOOP rather than the self-recursive-through-closures CPS shape used
-elsewhere in this file, for the same reason as %COLLECT-MANY/CPS
-(combinators-sequence.lisp): this is a hot per-item loop, and a closure per
-iteration is allocation it can avoid entirely. %RUN-PROGRESSING-PARSER/CPS's
-own \"succeeded but did not progress\" failure case (both for SEPARATOR and
-for PARSER) is reproduced explicitly via %PROGRESS-FAILURE-OBJECT below,
-since the loop no longer delegates to that shared function."
+  "Collect items separated by SEPARATOR until the next item cannot be read."
   (loop
     (multiple-value-bind (separator-ok separator-value separator-next separator-result)
         (%run-parser-on-token-vector separator input current)
@@ -269,10 +241,7 @@ MIN items overall is a committed failure, since CURRENT is already past the
 first collected item. Shared by SEP-BY-BETWEEN and SEP-BY-AT-LEAST, which differ
 only in whether MAX is a literal integer or NIL.
 
-A plain LOOP rather than the self-recursive-through-closures CPS shape used
-elsewhere in this file, for the same reason as %COLLECT-MANY/CPS and
-%COLLECT-SEPARATED-ITEMS/CPS above: this is SEP-BY-BETWEEN/SEP-BY-AT-LEAST's
-hot per-item loop, so a closure per iteration is allocation worth avoiding."
+The loop stops at MAX and rejects a non-progressing separator or item."
   (loop
     (when (and max (>= count max))
       (return (%success (nreverse values) current diagnostics)))

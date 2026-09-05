@@ -116,19 +116,7 @@ control stack or the heap on adversarial input."
   (values t value position diagnostics))
 
 (defun %merge-diagnostics (&rest diagnostics-lists)
-  ;; Avoid APPLY/APPEND over an attacker-influenced number of diagnostic groups;
-  ;; accumulate explicitly so merging stays linear in emitted diagnostics.
-  ;;
-  ;; DIAGNOSTICS-LISTS itself never escapes this function -- it is only ever
-  ;; walked by the DOLIST below, and %ENSURE-PARSE-FAILURE-LIST-COUNT is
-  ;; handed each individual element list, never the REST list itself -- so
-  ;; DYNAMIC-EXTENT is safe here, unlike a closure that might be stored or
-  ;; returned. Verified empirically (a controlled before/after byte-consed
-  ;; measurement): a 2-argument call here otherwise heap-allocates a fresh
-  ;; 2-cons list on every single call, EVEN WHEN both arguments are NIL --
-  ;; and this function runs on every combinator step across the whole library
-  ;; (SEQ, ALT, MANY, SEP-BY, and everything else that calls it), making it
-  ;; the single most-executed allocation site in the codebase.
+  ;; Keep the merge linear and avoid allocating an intermediate argument list.
   (declare (dynamic-extent diagnostics-lists))
   (let ((merged nil)
         (count 0))
@@ -161,16 +149,7 @@ control stack or the heap on adversarial input."
 
 (defun %failure-committed-if-consumed (failure current start)
   "Return FAILURE as a committed failure when input was consumed between START
-and CURRENT, and as a plain backtrackable one when it was not -- SEQ's
-commitment rule, which BIND-PARSER, %RUN-PARSER-SEQUENCE, %RUN-FIXED-REPETITION,
-MANY-TILL and TIMES-BETWEEN each state in prose and used to re-derive inline.
-
-Committing once a branch has consumed input is what makes ALT report the
-specific error from inside the intended alternative instead of a generic \"no
-alternative matched\": a branch that failed without moving is still ambiguous
-and may be backtracked over, whereas one that failed midway had clearly been
-selected. Only failure paths reach here, so naming the rule costs nothing a
-parse actually pays for."
+and CURRENT, and as an ordinary backtrackable one otherwise."
   (if (= current start) (%failure-from failure)
     (%committed-failure-from failure)))
 
@@ -184,21 +163,8 @@ parse actually pays for."
   "Define NAME as a function of LAMBDA-LIST returning a PARSER named PARSER-NAME
 whose :FN is (LAMBDA (INPUT POSITION) BODY...).
 
-A docstring at the head of BODY documents NAME itself, not the inner :FN
-lambda: it is hoisted onto the generated DEFUN, so DOCUMENTATION and DESCRIBE
-report it for the combinator a caller actually names. Splicing it into the
-lambda along with the rest of BODY -- the obvious expansion -- silently
-attaches it to an anonymous closure no caller can reach, which is exactly how
-14 hand-written combinator docstrings went missing before v1.0.0. A lone
-string BODY stays a return value, since only a string *followed by* more forms
-is a docstring."
-  ;; This STRINGP test runs while whatever file calls DEFINE-PARSER-FUNCTION is
-  ;; being compiled, never at program-execution time, so SB-COVER can never
-  ;; mark it covered however thoroughly it is exercised -- the third
-  ;; attribution artifact category docs/src/project/development.md documents, the same one as
-  ;; %ASSERT-SUCCESS-VALUES' declare-stripping loop. Both arms are genuinely
-  ;; tested: t/api-surface-test.lisp macroexpands one form with a docstring and
-  ;; one whose whole body is a string, and compares the resulting DEFUNs.
+ A leading string followed by another body form becomes NAME's documentation;
+ a lone string remains a parser result."
   (let ((docstring (when (and (stringp (first body)) (rest body))
                      (pop body))))
     `(defun ,name ,lambda-list

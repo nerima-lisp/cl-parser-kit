@@ -1,9 +1,7 @@
 (require :asdf)
 (require :sb-sprof)
 
-;;;; Statistical profiler over the tokenizer/parser/Pratt hot paths, for
-;;;; finding real bottlenecks before optimizing (see scripts/run-benchmarks.lisp
-;;;; for before/after throughput measurement once a fix is in hand).
+;;;; Statistical profiler for tokenizer, parser, and Pratt hot paths.
 ;;;;
 ;;;; Usage: sbcl --script scripts/profile-hotpaths.lisp [project-root]
 ;;;; Env vars: PROFILE_MODE (cpu|alloc, default cpu), PROFILE_SIZE,

@@ -173,11 +173,6 @@ branch that had already matched a keyword. See COMMIT and ATTEMPT."
   "Define NAME as MAKE-DIAGNOSTIC with :KIND fixed to KIND -- the shorthand
 constructor for one diagnostic severity."
   `(defun ,name (message &key span notes fixes data)
-     ;; The article test below picks "an ERROR" over "a ERROR" and runs at
-     ;; macroexpansion time only, so SB-COVER cannot attribute it even though
-     ;; all three call sites just below exercise it -- :ERROR takes one arm,
-     ;; :WARNING and :NOTE the other. Same artifact category as
-     ;; DEFINE-PARSER-FUNCTION's docstring test (combinators.lisp).
      ,(format nil "Build ~A ~A diagnostic reporting MESSAGE at SPAN, with ~
 optional NOTES, FIXES, and DATA. MAKE-DIAGNOSTIC with :KIND ~A supplied."
               (if (find (char (symbol-name kind) 0) "AEIOU") "an" "a")
@@ -228,13 +223,7 @@ message instead of three competing ones. Both merges are bounded by
 *MAXIMUM-PARSE-FAILURE-EXPECTED-COUNT* and
 *MAXIMUM-PARSE-FAILURE-DIAGNOSTIC-COUNT*, and the result is committed if either
 input was."
-  ;; FAILURES never escapes -- only walked by the LOOP below, and
-  ;; %MERGE-PARSE-FAILURE-PAIR receives individual PARSE-FAILURE elements,
-  ;; never this REST list itself -- so, like %MERGE-DIAGNOSTICS
-  ;; (combinators.lisp), a safe DYNAMIC-EXTENT case: called on every failed
-  ;; ALT/CHOICE branch and inside MANY-TILL/PERMUTE's own failure paths, all
-  ;; genuinely hot, always with exactly 2 arguments in this library's own
-  ;; call sites.
+  ;; FAILURES is consumed immediately by the loop and never retained.
   (declare (dynamic-extent failures))
   (loop with merged-failure = nil
         for failure in failures

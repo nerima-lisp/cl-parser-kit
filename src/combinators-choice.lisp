@@ -2,9 +2,7 @@
 
 ;;;; Choice and value-shaping combinators.
 ;;;;
-;;;; These mirror the primitives in COMBINATORS.LISP / COMBINATORS-SEQUENCE.LISP
-;;;; without APPLY, so computed parser lists cannot trip implementation argument
-;;;; limits or traverse circular lists forever at construction time.
+;;;; Computed parser lists avoid APPLY and reject circular lists at construction.
 
 (defun %ensure-parser-list-vector (name parsers)
   (multiple-value-bind (stream parser-count too-many-p)

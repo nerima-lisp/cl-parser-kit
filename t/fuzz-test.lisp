@@ -1,12 +1,6 @@
 (in-package :cl-parser-kit/test)
 
-;;; Fuzz coverage of the public tokenizer/parser boundary. cl-weave's IT-FUZZ
-;;; (added in cl-weave v0.9.0) generates adversarial inputs on IT-PROPERTY's
-;;; generator/shrinking machinery and treats any trial that signals an error
-;;; as a failure to shrink and report, complementing the fixed example-based
-;;; and property-based (IT-PROPERTY) tests elsewhere in this suite. A trial
-;;; passes by running to completion, so every EXPECT below is an extra
-;;; invariant on top of "does not signal".
+;;; Fuzz checks for the public tokenizer/parser boundary.
 
 (defparameter %fuzz-source-alphabet
   (concatenate 'string

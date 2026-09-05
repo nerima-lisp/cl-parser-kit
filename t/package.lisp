@@ -20,13 +20,6 @@
        ,form
      ,@assertions))
 
-;; The DECLARE-stripping LOOP just below (and its twin in
-;; %ASSERT-FAILURE-VALUES) runs at macroexpansion time -- while compiling
-;; whatever test file calls ASSERT-COMBINATOR-SUCCESS/-FAILURE -- never at
-;; program-execution time, so SB-COVER can never mark it covered no matter how
-;; many call sites pass a leading DECLARE (verified: several tests do, and
-;; still count 0 hits here). A third variant of the two attribution artifacts
-;; already documented in docs/src/project/development.md, not a real gap.
 (defmacro %assert-success-values (form (value next failure) &body assertions)
   (let ((declarations (loop while (and assertions
                                         (consp (first assertions))

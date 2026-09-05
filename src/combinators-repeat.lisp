@@ -2,12 +2,7 @@
 
 ;;;; Repetition combinators.
 ;;;;
-;;;; TIMES / CHAINL / CHAINR delegate to already-verified primitives (SEQ,
-;;;; CHAINL1/CHAINR1, OPTION). SKIP-MANY / FOLD-MANY / MANY-TILL use dedicated
-;;;; CPS loops that mirror %COLLECT-MANY/CPS exactly -- same progress guard
-;;;; (%RUN-PROGRESSING-PARSER/CPS rejects a non-advancing repetition) and same
-;;;; recovery rule (%RECOVERABLE-SUCCESS: stop on recoverable failure, propagate
-;;;; a committed one) -- but without consing an intermediate result list.
+;;;; Repetition combinators with progress and commitment checks.
 
 (defun %check-parser-repetition-count (name count)
   (when (> count *maximum-parser-repetition-count*)
@@ -59,10 +54,7 @@ Semantically MANY followed by discarding the list, but never allocates that
 list. Like MANY it rejects a sub-parser that succeeds without consuming input
 (guards against an infinite loop) and propagates a committed sub-failure.
 
-Written as a plain LOOP rather than the self-recursive-through-two-closures
-CPS shape used elsewhere in this file, for the same reason as
-%COLLECT-MANY/CPS (combinators-sequence.lisp): this is a hot per-token loop,
-and a closure per iteration is allocation this loop can avoid entirely."
+The loop avoids allocating a result list when results are discarded."
   (loop with current = position
         with diagnostics = '()
         do (multiple-value-bind (ok value next result)
@@ -123,15 +115,6 @@ END failed without committing, one PARSER is required. The parser fails when
 PARSER fails before END matches, or when END commits input and then fails; such
 a failure is committed iff any input was consumed, so an enclosing OPT/MANY does
 not silently backtrack past a partially-parsed run."
-  ;; A plain LOOP rather than the self-recursive-through-closures CPS shape
-  ;; used elsewhere in this file, for the same reason as %COLLECT-MANY/CPS
-  ;; (combinators-sequence.lisp): this is a hot per-token loop, and a closure
-  ;; per iteration is allocation it can avoid entirely. Two levels of the
-  ;; original CPS dispatch collapse into the COND below: try END first (the
-  ;; outer %RUN-PARSER/IF-SUCCESS), and only on END's uncommitted failure try
-  ;; PARSER (the inner %RUN-PROGRESSING-PARSER/CPS, whose own "succeeded but
-  ;; did not progress" failure is reproduced explicitly via
-  ;; %PROGRESS-FAILURE-OBJECT below).
   (loop with current = position
         with values = '()
         with diagnostics = '()
