@@ -20,6 +20,11 @@ checks in parallel:
 | `formatting` | Every Nix file is nixfmt-clean. |
 | `docs` | `mkdocs build --strict` succeeds — no broken links, no unlisted pages. |
 
+The coverage check gates on the raw totals. It also prints an adjusted total
+with definition-only macro-attribution files excluded, because SB-COVER
+attributes those expansions to their call sites. Keep that exclusion list
+narrow: the checker rejects it if it removes every file with coverage data.
+
 Run one on its own while iterating:
 
 ```sh
