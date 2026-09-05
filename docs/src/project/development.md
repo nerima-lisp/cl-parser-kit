@@ -8,7 +8,7 @@ Everything below assumes a checkout and a working Nix with flakes enabled.
 nix flake check --print-build-logs
 ```
 
-This is the whole gate, and it is exactly what CI runs. It realises five
+This is the whole gate, and it is exactly what CI runs. It realises seven
 checks in parallel:
 
 | Check | What it proves |
