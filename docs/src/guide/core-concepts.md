@@ -28,6 +28,8 @@ Spans track source locations using:
 
 The tokenizer is rule-based and supports:
 
+- named modes with a stack for context-sensitive rules
+- a pull cursor that returns one token at a time
 - literal matching
 - keyword matching on identifier boundaries
 - identifier and number rules
@@ -36,6 +38,9 @@ The tokenizer is rule-based and supports:
 - line and block comment rules
 - whitespace skipping
 - end-of-input handling
+
+Each token carries its source span. Existing callers can still tokenize a
+complete source string into a vector.
 
 ## Parser
 

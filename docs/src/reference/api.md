@@ -37,7 +37,8 @@ Tokens carry lexical meaning and source metadata.
   `token-start` / `token-end` to recover line/column data when
   `token-span` is absent
 
-Typical usage starts with a tokenizer and ends with a vector of tokens.
+Tokenizers can produce a vector for existing parser entry points or expose a
+cursor when callers need to consume tokens one at a time.
 
 - [`examples/tokenizer-example.lisp`][tokenizer-example]
 - [`examples/token-stream-example.lisp`][token-stream-example]
@@ -45,14 +46,16 @@ Typical usage starts with a tokenizer and ends with a vector of tokens.
 
 ## Tokenizers
 
-Tokenizer helpers keep the lexical layer independent and REPL-friendly.
+Tokenizers apply ordered rules to source text. A named mode selects which
+ordered rule set is active at each position.
 
 - tokenizer type: `tokenizer`
-- constructor: `make-tokenizer`
-- tokenizer accessors: `tokenizer-rules`
+- constructor: `make-tokenizer`; accessors: `tokenizer-rules`,
+  `tokenizer-modes`, `tokenizer-initial-mode`
 - rule type: `token-rule`
 - rule constructor: `make-token-rule`
-- rule accessors: `token-rule-type`, `token-rule-matcher`, `token-rule-skip-p`
+- rule accessors: `token-rule-type`, `token-rule-matcher`,
+  `token-rule-skip-p`, `token-rule-action`
 - built-in rules: `make-literal-rule`, `make-keyword-rule`,
   `make-whitespace-rule`,
   `make-identifier-rule`, `make-number-rule`, `make-string-rule`,
@@ -60,7 +63,66 @@ Tokenizer helpers keep the lexical layer independent and REPL-friendly.
   `make-block-comment-rule`, `make-nested-block-comment-rule`
 - numeric and operator rules: `make-radix-integer-rule`, `make-float-rule`,
   `make-operator-rule`
-- entry points: `tokenize`, `tokenize-string`
+- vector entry points: `tokenize`, `tokenize-string`
+- pull entry points: `make-tokenizer-cursor`, `tokenizer-cursor-next`
+
+`make-tokenizer` keeps `:rules` for the existing single-rule-set form. For a
+stateful tokenizer, pass `:modes` as an alist from mode names to ordered rule
+lists and select the starting mode with `:initial-mode`. A rule's `:action`
+can push a mode, pop back to the previous mode, or replace the current mode.
+The action forms are `(:push mode)`, `:pop`, and `(:switch mode)`.
+
+```lisp
+(let* ((tokenizer
+         (make-tokenizer
+          :initial-mode :content
+          :modes
+          (list
+           (cons :content
+                 (list (make-literal-rule :open "<"
+                                          :action '(:push :tag))))
+           (cons :tag
+                 (list (make-literal-rule :close ">" :action :pop)
+                       (make-identifier-rule)))))
+       (cursor (make-tokenizer-cursor "<item>" tokenizer)))
+  (loop for token = (tokenizer-cursor-next cursor)
+        while token
+        collect (list (token-type token)
+                      (token-start token)
+                      (token-end token)
+                      (span-start-line (token-span token))
+                      (span-start-column (token-span token)))))
+```
+
+`tokenizer-cursor-next` returns one token per call and returns `nil` at EOF.
+With the default token constructor, each token retains its half-open start and
+end offsets and its line and column in `token-span`. The cursor reads from the
+source string supplied at creation; it does not build a vector of all tokens.
+`tokenize` and `tokenize-string` remain vector-building wrappers for existing
+callers.
+
+Both vector entry points and `make-tokenizer-cursor` accept per-call limits:
+`:max-source-length`, `:max-tokens`, `:max-rules`, and `:max-mode-depth`.
+Each defaults to its corresponding dynamic limit, so existing bindings remain
+effective: `*maximum-tokenizer-source-length*`, `*maximum-tokenizer-tokens*`,
+`*maximum-tokenizer-rules*`, and `*maximum-tokenizer-mode-depth*`.
+
+Pass `:on-limit-exceeded` to `make-tokenizer-cursor`, `tokenize`, or
+`tokenize-string` to handle a runtime limit at the source position where it
+occurs. The function is called as
+`(kind limit value offset line column)`. If it returns normally, the library
+signals `tokenizer-resource-limit-exceeded`; if it exits non-locally, that exit
+propagates. Without a callback, the existing condition is signaled directly.
+Its readers are `tokenizer-resource-limit-exceeded-kind`,
+`tokenizer-resource-limit-exceeded-value`, and
+`tokenizer-resource-limit-exceeded-limit`.
+
+Pass `:token-constructor` to the same entry points to create each emitted
+object. It is called as
+`(type text value start end line column)` and may return any non-`nil` object.
+`tokenizer-cursor-next` uses `nil` to mark EOF. The offsets are half-open, and
+`line` and `column` identify the token start. Without this function, the
+tokenizer creates the existing `token` object with its full source span.
 
 `make-char-rule` matches exactly one character described by a `character`,
 a string/list of characters (any member), or a predicate function, with an
@@ -98,14 +160,11 @@ accepts `:escapes`, an alist of `(escaped-char . replacement-char)`, to
 decode escape sequences such as `\n` into their control characters; a
 character absent from the alist is taken literally.
 
-- `tokenize` rejects a source longer than `*maximum-tokenizer-source-length*`,
-  stops once it has emitted `*maximum-tokenizer-tokens*` tokens, and rejects
-  a tokenizer with more than `*maximum-tokenizer-rules*` rules, all by
-  signaling `tokenizer-resource-limit-exceeded` (accessors
-  `tokenizer-resource-limit-exceeded-kind`,
-  `tokenizer-resource-limit-exceeded-value`,
-  `tokenizer-resource-limit-exceeded-limit`) instead of exhausting memory;
-  rebind tokenizer limits for intentionally large inputs
+- `tokenize` and the pull cursor enforce source-length, emitted-token,
+  tokenizer-rule, and mode-stack-depth limits, all by signaling
+  `tokenizer-resource-limit-exceeded` instead of exhausting memory; use the
+  per-call keywords above or rebind their dynamic defaults for intentionally
+  large inputs
 - tokenizer rule constructors that accept computed alternative sets,
   currently `make-operator-rule`, reject more than
   `*maximum-tokenizer-rule-alternatives*` alternatives with

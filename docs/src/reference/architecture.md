@@ -7,7 +7,7 @@ intentionally narrow so the behavior remains easy to reason about and test.
 
 1. `spans` model source locations.
 2. `tokens` attach lexical meaning and source metadata to text.
-3. `tokenizer` turns raw text into token vectors.
+3. `tokenizer` turns raw text into tokens, either one at a time or as a vector.
 4. `diagnostics` capture structured failures and fix-it data.
 5. `combinators` provide small parser primitives over token vectors.
 6. `pratt` builds expression parsers on top of token streams.
