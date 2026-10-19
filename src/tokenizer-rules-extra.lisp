@@ -19,7 +19,7 @@
         do (incf end)
         finally (return end)))
 
-(defun make-radix-integer-rule (&key (type :integer) (radix 16) (prefix "0x") skip-p)
+(defun make-radix-integer-rule (&key (type :integer) (radix 16) (prefix "0x") skip-p action)
   "Match an integer written in RADIX, optionally introduced by PREFIX, and yield
 its numeric value.
 
@@ -119,7 +119,7 @@ never calls the Lisp reader, only PARSE-INTEGER and bounded arithmetic)."
     (%coerce-bounded-float scaled float-type)))
 
 (defun make-float-rule (&key (type :float) (float-type 'double-float)
-                          (require-fractional t) allow-sign skip-p)
+                             (require-fractional t) allow-sign skip-p action)
   "Match a floating-point literal -- integer digits with an optional fractional
 part and an optional decimal exponent -- and yield its value as a FLOAT-TYPE.
 
@@ -152,14 +152,14 @@ the value is produced by PARSE-INTEGER and bounded arithmetic, never the reader.
                  (%scan-float-exponent-part source after-int limit-end)
                (when (or (not require-fractional) frac-start has-exp-p)
                  (%skip-or-match skip-p (- end index)
-                     (values t (- end index)
-                             (%string-range source index end)
-                             (%float-lexeme-value source int-start int-end
-                                                  frac-start frac-end
-                                                  has-exp-p exp-sign exp-start exp-end
-                                                  sign float-type))))))))))))
+                                 (values t (- end index)
+                                         (%string-range source index end)
+                                         (%float-lexeme-value source int-start int-end
+                                                              frac-start frac-end
+                                                              has-exp-p exp-sign exp-start exp-end
+                                                              sign float-type))))))))))))
 
-(defun make-operator-rule (type operators &key skip-p)
+(defun make-operator-rule (type operators &key skip-p action)
   "Match the LONGEST of a set of literal OPERATORS at the current position,
 yielding the matched operator string as both TEXT and VALUE.
 

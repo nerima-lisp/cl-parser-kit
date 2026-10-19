@@ -49,7 +49,7 @@ CHAR unchanged when ESCAPE-MAP is NIL or has no entry for it."
                  (get-output-stream-string buffer))
                (subseq source (1+ index) (1- end)))))))))
 
-(defun make-string-rule (&key (type :string) (delimiter #\") escape-char escapes skip-p)
+(defun make-string-rule (&key (type :string) (delimiter #\") escape-char escapes skip-p action)
   "Match a DELIMITER-quoted string, returning the unquoted contents as the token
 VALUE.
 
@@ -77,7 +77,7 @@ literally."
         (+ closing (length delimiter))
         (length source))))
 
-(defun %make-prefixed-comment-rule (type skip-p value-function prefix end-fn)
+(defun %make-prefixed-comment-rule (type skip-p value-function prefix end-fn action)
   (%token-rule
    (lambda (source index)
      (let* ((prefix-length (length prefix))
@@ -88,20 +88,20 @@ literally."
          (let ((end (funcall end-fn source match-end)))
            ;; Comments are almost always skipped; see %SKIP-OR-MATCH.
            (%skip-or-match skip-p (- end index)
-               (%emit-scanned-token-match source index end value-function))))))))
+                           (%emit-scanned-token-match source index end value-function))))))))
 
 (defun make-line-comment-rule (&key (type :comment) (prefix ";") (skip-p t)
-                                    (value-function #'identity))
+                                    (value-function #'identity) action)
   "Build a TOKEN-RULE matching a comment that starts at PREFIX and runs to the end
 of the line (or the end of the source) as a token of TYPE.
 
 SKIP-P defaults to T, since a line comment is normally discarded; pass NIL to
 keep it, for a formatter or a CST that must round-trip the original text."
   (%ensure-non-empty-string prefix "prefix")
-  (%make-prefixed-comment-rule type skip-p value-function prefix #'%line-comment-end))
+  (%make-prefixed-comment-rule type skip-p value-function prefix #'%line-comment-end action))
 
 (defun make-block-comment-rule (&key (type :comment) (start "/*") (end "*/") (skip-p t)
-                                  (value-function #'identity))
+                                     (value-function #'identity) action)
   "Build a TOKEN-RULE matching a comment delimited by START and END as a token of
 TYPE, ending at the first END (or the end of the source when it is never
 closed) -- these comments do not nest; use MAKE-NESTED-BLOCK-COMMENT-RULE when
@@ -112,7 +112,8 @@ SKIP-P defaults to T, as for MAKE-LINE-COMMENT-RULE."
   (%ensure-non-empty-string end "end")
   (%make-prefixed-comment-rule type skip-p value-function start
                                (lambda (source match-end)
-                                 (%block-comment-end source match-end end))))
+                                 (%block-comment-end source match-end end))
+                               action))
 
 (defun %nested-block-comment-end (source match-end start end)
   ;; MATCH-END points just past the opening START delimiter, so the comment
@@ -143,7 +144,7 @@ SKIP-P defaults to T, as for MAKE-LINE-COMMENT-RULE."
          (incf index))))))
 
 (defun make-nested-block-comment-rule (&key (type :comment) (start "/*") (end "*/") (skip-p t)
-                                         (value-function #'identity))
+                                            (value-function #'identity) action)
   "Match a block comment delimited by START and END that may NEST -- an inner
 START opens a new level that its own END closes, so the comment terminates only
 when every level has closed.
@@ -159,4 +160,5 @@ default."
     (error "start and end must be distinct strings."))
   (%make-prefixed-comment-rule type skip-p value-function start
                                (lambda (source match-end)
-                                 (%nested-block-comment-end source match-end start end))))
+                                 (%nested-block-comment-end source match-end start end))
+                               action))

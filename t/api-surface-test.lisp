@@ -121,3 +121,26 @@ leading string ends up in the DEFUN's docstring position at all."
              "the docstring"
              (cl-parser-kit::%success t position)))
           :to-equal "the docstring"))
+
+(it-sequential "stateful-tokenizer-public-symbols-and-built-in-literal-action-test"
+  (dolist (name '(token-rule-action
+                  tokenizer-modes
+                  tokenizer-initial-mode
+                  make-tokenizer-cursor
+                  tokenizer-cursor-next
+                  *maximum-tokenizer-mode-depth*))
+    (expect (nth-value 1 (find-symbol (symbol-name name) :cl-parser-kit))
+            :to-equal :external))
+  (let* ((tokenizer
+           (make-tokenizer
+            :modes
+            (list (cons :content
+                        (list (make-literal-rule :open "["
+                                                 :action '(:push :inner))))
+                  (cons :inner
+                        (list (make-literal-rule :close "]" :action :pop)
+                              (make-literal-rule :inner "x"))))
+            :initial-mode :content))
+         (tokens (tokenize "[x]" tokenizer)))
+    (expect (map 'list #'token-type tokens)
+            :to-equal '(:open :inner :close))))

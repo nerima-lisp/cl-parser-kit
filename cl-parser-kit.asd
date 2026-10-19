@@ -10,7 +10,7 @@
   :author "takeokunn <bararararatty@gmail.com>"
   :maintainer "takeokunn <bararararatty@gmail.com>"
   :license "MIT"
-  :version "1.1.1"
+  :version "1.2.0"
   :homepage "https://github.com/nerima-lisp/cl-parser-kit"
   :bug-tracker "https://github.com/nerima-lisp/cl-parser-kit/issues"
   :source-control (:git "https://github.com/nerima-lisp/cl-parser-kit.git")
@@ -63,7 +63,7 @@
   :author "takeokunn <bararararatty@gmail.com>"
   :maintainer "takeokunn <bararararatty@gmail.com>"
   :license "MIT"
-  :version "1.1.1"
+  :version "1.2.0"
   :homepage "https://github.com/nerima-lisp/cl-parser-kit"
   :bug-tracker "https://github.com/nerima-lisp/cl-parser-kit/issues"
   :source-control (:git "https://github.com/nerima-lisp/cl-parser-kit.git")
@@ -76,6 +76,7 @@
    (:file "helpers-tokenizer")
    (:file "helpers-tokenizer-fixtures")
    (:file "tokenizer-basic-test")
+   (:file "tokenizer-stateful-test")
    (:file "tokenizer-span-test")
    (:file "tokenizer-comment-test")
    (:file "tokenizer-string-test")

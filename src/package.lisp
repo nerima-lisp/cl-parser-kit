@@ -310,4 +310,10 @@
    #:cst-node-equal
    #:cst-node-collect
    #:cst-node-count
-   #:cst-node-depth))
+   #:cst-node-depth
+   #:token-rule-action
+   #:tokenizer-modes
+   #:tokenizer-initial-mode
+   #:make-tokenizer-cursor
+   #:tokenizer-cursor-next
+   #:*maximum-tokenizer-mode-depth*))

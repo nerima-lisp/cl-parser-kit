@@ -72,9 +72,9 @@ and its siblings (TOKENIZER-RULES-TEXT.LISP, TOKENIZER-RULES-EXTRA.LISP)
 otherwise repeats -- composable rather than wrapping the whole DEFUN, so it
 fits equally well whether MATCHER is a bare lambda or one built up inside a
 LET/LET* of precomputed bindings."
-  `(make-token-rule :type type :skip-p skip-p :matcher ,matcher))
+  `(make-token-rule :type type :skip-p skip-p :action action :matcher ,matcher))
 
-(defun make-literal-rule (type literal &key skip-p (case-sensitive t))
+(defun make-literal-rule (type literal &key skip-p (case-sensitive t) action)
   "Match LITERAL verbatim (no identifier-boundary check, unlike MAKE-KEYWORD-RULE
 -- `+` or `->` match anywhere, including inside a longer run of punctuation).
 
@@ -90,8 +90,11 @@ way, exactly as MAKE-KEYWORD-RULE documents."
          (when matched-p
            (values t literal-length text value)))))))
 
-(defun make-keyword-rule (type literal &key skip-p (identifier-char-predicate #'identifier-char-p)
-                                          (case-sensitive t))
+(defun make-keyword-rule (type literal
+                               &key skip-p
+                               (identifier-char-predicate #'identifier-char-p)
+                               (case-sensitive t)
+                               action)
   "Match LITERAL as a whole keyword: it matches only when not flanked by an
 identifier character on either side (so `int` does not match inside `integer`).
 
@@ -115,7 +118,7 @@ identifier character."
                                         (char source end)))))
              (values t literal-length text value))))))))
 
-(defun make-whitespace-rule (&key (type :whitespace) skip-p)
+(defun make-whitespace-rule (&key (type :whitespace) skip-p action)
   "Build a TOKEN-RULE matching a maximal run of whitespace as a token of TYPE.
 
 SKIP-P T drops the run instead of emitting it, which is what most grammars
@@ -140,7 +143,7 @@ member."
     (function spec)
     (sequence (lambda (char) (and (find char spec) t)))))
 
-(defun make-char-rule (type spec &key skip-p (value-function #'identity))
+(defun make-char-rule (type spec &key skip-p (value-function #'identity) action)
   "Match exactly one character described by SPEC -- a CHARACTER, a string/list of
 characters (any member), or a predicate FUNCTION.
 
@@ -156,7 +159,8 @@ not need MAKE-LITERAL-RULE's multi-character matching."
            (let ((text (%string-range source index (1+ index))))
              (values t 1 text (funcall value-function text)))))))))
 
-(defun make-predicate-rule (type predicate &key (min-length 1) skip-p (value-function #'identity))
+(defun make-predicate-rule (type predicate
+                                 &key (min-length 1) skip-p (value-function #'identity) action)
   "Build a TOKEN-RULE matching a maximal run of characters satisfying PREDICATE as
 a token of TYPE, provided the run is at least MIN-LENGTH characters.
 
@@ -169,12 +173,13 @@ text to the token's value, and SKIP-P drops the match entirely."
      (let ((end (%scan-while source index predicate)))
        (when (>= (- end index) min-length)
          (%skip-or-match skip-p (- end index)
-           (%emit-scanned-token-match source index end value-function)))))))
+                         (%emit-scanned-token-match source index end value-function)))))))
 
 (defun make-identifier-rule (&key (type :identifier)
                                   skip-p
                                   (start-predicate #'identifier-start-char-p)
-                                  (continue-predicate #'identifier-char-p))
+                                  (continue-predicate #'identifier-char-p)
+                                  action)
   "Build a TOKEN-RULE matching an identifier as a token of TYPE: one character
 satisfying START-PREDICATE followed by a maximal run satisfying
 CONTINUE-PREDICATE.
@@ -241,7 +246,7 @@ has always guarded its own identical coercion this way."
            'single-float))
         (parse-integer text))))
 
-(defun make-number-rule (&key (type :number) skip-p)
+(defun make-number-rule (&key (type :number) skip-p action)
   "Build a TOKEN-RULE matching a decimal integer or simple float as a token of
 TYPE, whose value is the parsed number rather than its text.
 
