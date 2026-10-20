@@ -34,18 +34,20 @@ embedders can turn a hostile input into a diagnostic instead of an unbounded
 allocation.")
 
 (defstruct (token-rule (:constructor %make-token-rule
-                            (&key type matcher skip-p action)))
+                            (&key type matcher skip-p action first-characters)))
   "One tokenizer rule. MATCHER is called with (SOURCE INDEX) and returns NIL
 for no match, or T plus the matched length and optionally token text and value.
 SKIP-P consumes a match without emitting a token. ACTION is a static mode
-transition: (:PUSH mode), :POP, or (:SWITCH mode)."
+transition: (:PUSH mode), :POP, or (:SWITCH mode). FIRST-CHARACTERS is NIL for
+a matcher that may start with any character, or a vector of possible starts."
   type
   matcher
   skip-p
-  action)
+  action
+  first-characters)
 
 (defstruct (tokenizer (:constructor %make-tokenizer
-                            (&key rules modes initial-mode legacy-p
+                            (&key rules modes initial-mode legacy-p mode-dispatches
                                   (unknown-token-type :unknown))))
   "An ordered tokenizer with optional named rule modes.
 
@@ -56,34 +58,57 @@ is emitted with UNKNOWN-TOKEN-TYPE. Legacy :RULES tokenizers use an internal
   modes
   initial-mode
   legacy-p
+  mode-dispatches
   unknown-token-type)
+(defstruct (%tokenizer-mode-dispatch
+             (:constructor %make-tokenizer-mode-dispatch
+                 (&key rules fallback-rules fallback-indices
+                       by-first-character indexed-p)))
+  rules
+  fallback-rules
+  fallback-indices
+  by-first-character
+  indexed-p)
 
 (defun token-rule-match (rule source index)
   (funcall (token-rule-matcher rule) source index))
 
-(defun %ensure-vector-within-tokenizer-limit (items limit kind)
-  "Coerce ITEMS to a vector via ENSURE-VECTOR-UP-TO, signalling
-TOKENIZER-RESOURCE-LIMIT-EXCEEDED (tagged KIND) instead of returning one
-longer than LIMIT. Shared by %ENSURE-TOKENIZER-RULE-VECTOR and
-%ENSURE-TOKENIZER-RULE-ALTERNATIVES-VECTOR, which differ only in which
-limit/kind applies."
+(defun %build-tokenizer-mode-dispatch (rule-sequence)
+  (let ((rules (if (vectorp rule-sequence)
+                   (copy-seq rule-sequence)
+                   (coerce rule-sequence 'vector)))
+        (fallback-rules (make-array 0 :adjustable t :fill-pointer 0))
+        (fallback-indices (make-array 0 :adjustable t :fill-pointer 0))
+        (by-first-character (make-hash-table :test #'eql)))
+    (loop for rule across rules
+          for index from 0
+          for first-characters = (token-rule-first-characters rule)
+          do (if first-characters
+                 (loop for character across first-characters
+                       for candidates = (or (gethash character by-first-character)
+                                            (setf (gethash character by-first-character)
+                                                  (make-array 0 :adjustable t
+                                                              :fill-pointer 0)))
+                       do (vector-push-extend index candidates))
+                 (progn
+                   (vector-push-extend rule fallback-rules)
+                   (vector-push-extend index fallback-indices))))
+    (%make-tokenizer-mode-dispatch
+     :rules rules
+     :fallback-rules fallback-rules
+     :fallback-indices fallback-indices
+     :by-first-character by-first-character
+     :indexed-p (plusp (hash-table-count by-first-character)))))
+
+(defun %ensure-tokenizer-rule-alternatives-vector (alternatives kind)
   (multiple-value-bind (stream count too-many-p)
-      (ensure-vector-up-to items limit)
+      (ensure-vector-up-to alternatives *maximum-tokenizer-rule-alternatives*)
     (when too-many-p
       (error 'tokenizer-resource-limit-exceeded
              :kind kind
              :value count
-             :limit limit))
+             :limit *maximum-tokenizer-rule-alternatives*))
     stream))
-
-(defun %ensure-tokenizer-rule-vector (rules
-                                           &optional
-                                             (limit *maximum-tokenizer-rules*))
-  (%ensure-vector-within-tokenizer-limit rules limit :rule-count))
-
-(defun %ensure-tokenizer-rule-alternatives-vector (alternatives kind)
-  (%ensure-vector-within-tokenizer-limit
-   alternatives *maximum-tokenizer-rule-alternatives* kind))
 
 (defun %tokenize-emit (source type text value start end
                        start-line start-column end-line end-column
@@ -137,6 +162,43 @@ limit/kind applies."
              (when matched-p
                (return (values t rule end end-line end-column token))))
         finally (return (values nil nil index line column nil))))
+(defun %tokenize-dispatch-first-match (dispatch source index line column
+                                       &optional token-constructor)
+  "Try the current character's indexed rules and fallback rules in definition order."
+  (let* ((rules (%tokenizer-mode-dispatch-rules dispatch))
+         (specific
+           (gethash (char source index)
+                    (%tokenizer-mode-dispatch-by-first-character dispatch)))
+         (fallback-rules (%tokenizer-mode-dispatch-fallback-rules dispatch)))
+    (if (null specific)
+        (%tokenize-first-match fallback-rules source index line column
+                               token-constructor)
+        (let ((specific-length (length specific))
+              (fallback-indices
+                (%tokenizer-mode-dispatch-fallback-indices dispatch))
+              (fallback-position 0)
+              (specific-position 0))
+          (loop while (or (< specific-position specific-length)
+                          (< fallback-position (length fallback-indices)))
+                for fallback-p =
+                  (or (>= specific-position specific-length)
+                      (and (< fallback-position (length fallback-indices))
+                           (< (aref fallback-indices fallback-position)
+                              (aref specific specific-position))))
+                for rule-index =
+                  (if fallback-p
+                      (aref fallback-indices fallback-position)
+                      (aref specific specific-position))
+                for rule = (aref rules rule-index)
+                do (multiple-value-bind (matched-p end end-line end-column token)
+                       (%tokenize-rule-match rule source index line column
+                                             token-constructor)
+                     (when matched-p
+                       (return (values t rule end end-line end-column token))))
+                   (if fallback-p
+                       (incf fallback-position)
+                       (incf specific-position))
+                finally (return (values nil nil index line column nil)))))))
 
 (defun %tokenize-unknown (tokenizer source index line column
                          &optional token-constructor)
@@ -203,14 +265,44 @@ return a non-NIL object for each emitted token."
     (t
      (error "Malformed token rule action ~S; expected (:PUSH mode), :POP, or (:SWITCH mode)."
             action))))
+(defun %ensure-token-rule-first-characters (first-characters)
+  (when first-characters
+    (let ((sequence
+            (cond
+              ((stringp first-characters) first-characters)
+              ((vectorp first-characters) first-characters)
+              ((listp first-characters)
+               (%check-proper-acyclic-list first-characters)
+               (coerce first-characters 'vector))
+              (t
+               (error "FIRST-CHARACTERS must be a character sequence, got ~S."
+                      first-characters))))
+          (seen (make-hash-table :test #'eql))
+          (characters (make-array 0 :element-type 'character
+                                  :adjustable t :fill-pointer 0)))
+      (loop for character across sequence
+            do (unless (characterp character)
+                 (error "FIRST-CHARACTERS contains non-character ~S." character))
+               (unless (gethash character seen)
+                 (setf (gethash character seen) t)
+                 (vector-push-extend character characters)))
+      (when (zerop (length characters))
+        (error "FIRST-CHARACTERS must contain at least one character."))
+      (coerce characters 'vector))))
 
-(defun make-token-rule (&key type matcher skip-p action)
-  "Construct a TOKEN-RULE with an optional static mode ACTION."
+(defun make-token-rule (&key type matcher skip-p action first-characters)
+  "Construct a TOKEN-RULE with an optional static mode ACTION.
+
+FIRST-CHARACTERS declares every character at which MATCHER may match. Omit it
+when MATCHER can begin with any character; the rule then remains a fallback
+candidate for every input character."
   (%token-rule-action-components action)
   (%make-token-rule :type type
                     :matcher matcher
                     :skip-p skip-p
-                    :action action))
+                    :action action
+                    :first-characters
+                    (%ensure-token-rule-first-characters first-characters)))
 
 (defun make-tokenizer (&key (rules nil rules-p)
                             (modes nil modes-p)
@@ -277,21 +369,27 @@ internal :DEFAULT mode. Rule actions must refer to a declared mode."
           (error "Unknown initial tokenizer mode ~S." selected-mode))
         (dolist (entry entries)
           (validate-action-targets (cdr entry) entries))
-        (%make-tokenizer :rules rules
-                         :modes entries
-                         :initial-mode selected-mode
-                         :legacy-p (not modes-p)
-                         :unknown-token-type unknown-token-type)))))
+        (let ((mode-dispatches
+                (loop for (mode . rule-sequence) in entries
+                      collect (cons mode
+                                    (%build-tokenizer-mode-dispatch rule-sequence)))))
+          (%make-tokenizer :rules rules
+                           :modes entries
+                           :initial-mode selected-mode
+                           :legacy-p (not modes-p)
+                           :mode-dispatches mode-dispatches
+                           :unknown-token-type unknown-token-type))))))
 (defstruct (tokenizer-cursor
              (:constructor %make-tokenizer-cursor
-                 (&key source tokenizer modes current-rules mode-stack index line column
-                       token-count max-tokens max-mode-depth
-                       on-limit-exceeded token-constructor)))
+                 (&key source tokenizer modes current-rules current-dispatch
+                       mode-stack index line column token-count max-tokens
+                       max-mode-depth on-limit-exceeded token-constructor)))
   "Incremental token-production state over one complete source string."
   source
   tokenizer
   modes
   current-rules
+  current-dispatch
   mode-stack
   index
   line
@@ -335,6 +433,7 @@ END LINE COLUMN) for each emitted token and must return a non-NIL object."
   (check-type max-mode-depth (integer 0 *))
   (let ((source-length (length source))
         (mode-entries (tokenizer-modes tokenizer))
+        (mode-dispatches (tokenizer-mode-dispatches tokenizer))
         (rule-count 0))
     (when (> source-length max-source-length)
       (when on-limit-exceeded
@@ -356,12 +455,8 @@ END LINE COLUMN) for each emitted token and must return a non-NIL object."
         (error 'tokenizer-resource-limit-exceeded
                :kind :rule-count :value rule-count :limit max-rules)))
     (let* ((initial-mode (tokenizer-initial-mode tokenizer))
-           (mode-rules
-            (loop for (mode . rules) in mode-entries
-                  collect (cons mode
-                                (%ensure-tokenizer-rule-vector rules max-rules))))
            (initial-mode-entry
-             (assoc initial-mode mode-rules :test #'eq)))
+             (assoc initial-mode mode-dispatches :test #'eq)))
       (unless initial-mode-entry
         (error "Unknown initial tokenizer mode ~S." initial-mode))
       (when (> 1 max-mode-depth)
@@ -371,8 +466,11 @@ END LINE COLUMN) for each emitted token and must return a non-NIL object."
                :kind :mode-depth :value 1 :limit max-mode-depth))
       (%make-tokenizer-cursor :source source
                               :tokenizer tokenizer
-                              :modes mode-rules
-                              :current-rules (cdr initial-mode-entry)
+                              :modes mode-dispatches
+                              :current-rules
+                              (%tokenizer-mode-dispatch-rules
+                               (cdr initial-mode-entry))
+                              :current-dispatch (cdr initial-mode-entry)
                               :mode-stack (list initial-mode)
                               :index 0
                               :line 1
@@ -405,16 +503,22 @@ END LINE COLUMN) for each emitted token and must return a non-NIL object."
                     :limit (tokenizer-cursor-max-mode-depth cursor)))
            (push mode (tokenizer-cursor-mode-stack cursor))
            (setf (tokenizer-cursor-current-rules cursor)
+                 (%tokenizer-mode-dispatch-rules (cdr mode-entry))
+                 (tokenizer-cursor-current-dispatch cursor)
                  (cdr mode-entry)))))
       (:pop
        (unless (cdr (tokenizer-cursor-mode-stack cursor))
          (error "Tokenizer mode stack underflow while applying :POP."))
-       (let ((mode-stack (cdr (tokenizer-cursor-mode-stack cursor))))
+       (let* ((mode-stack (cdr (tokenizer-cursor-mode-stack cursor)))
+              (mode-entry
+                (assoc (car mode-stack)
+                       (tokenizer-cursor-modes cursor)
+                       :test #'eq)))
          (setf (tokenizer-cursor-mode-stack cursor) mode-stack
                (tokenizer-cursor-current-rules cursor)
-               (cdr (assoc (car mode-stack)
-                           (tokenizer-cursor-modes cursor)
-                           :test #'eq)))))
+               (%tokenizer-mode-dispatch-rules (cdr mode-entry))
+               (tokenizer-cursor-current-dispatch cursor)
+               (cdr mode-entry))))
       (:switch
        (let ((mode-entry
                (assoc mode (tokenizer-cursor-modes cursor) :test #'eq)))
@@ -422,6 +526,8 @@ END LINE COLUMN) for each emitted token and must return a non-NIL object."
            (error "Tokenizer action refers to unknown mode ~S." mode))
          (setf (car (tokenizer-cursor-mode-stack cursor)) mode
                (tokenizer-cursor-current-rules cursor)
+               (%tokenizer-mode-dispatch-rules (cdr mode-entry))
+               (tokenizer-cursor-current-dispatch cursor)
                (cdr mode-entry)))))))
 
 (defun %tokenizer-cursor-count-token (cursor offset line column)
@@ -446,11 +552,16 @@ END LINE COLUMN) for each emitted token and must return a non-NIL object."
    for line = (tokenizer-cursor-line cursor)
    for column = (tokenizer-cursor-column cursor)
    while (< index (length source))
-   do (let* ((rules (tokenizer-cursor-current-rules cursor)))
+   do (let* ((rules (tokenizer-cursor-current-rules cursor))
+             (dispatch (tokenizer-cursor-current-dispatch cursor)))
         (multiple-value-bind (matched-p rule end end-line end-column token)
-            (%tokenize-first-match
-             rules source index line column
-             (tokenizer-cursor-token-constructor cursor))
+            (if (%tokenizer-mode-dispatch-indexed-p dispatch)
+                (%tokenize-dispatch-first-match
+                 dispatch source index line column
+                 (tokenizer-cursor-token-constructor cursor))
+                (%tokenize-first-match
+                 rules source index line column
+                 (tokenizer-cursor-token-constructor cursor)))
           (if matched-p
               (progn
                 (setf (tokenizer-cursor-index cursor) end

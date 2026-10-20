@@ -72,6 +72,16 @@ lists and select the starting mode with `:initial-mode`. A rule's `:action`
 can push a mode, pop back to the previous mode, or replace the current mode.
 The action forms are `(:push mode)`, `:pop`, and `(:switch mode)`.
 
+Custom matchers can pass `:first-characters` to `make-token-rule` as a
+non-empty string, list, or vector of possible starting characters. Include
+every character on which the matcher can succeed at the current position. If a
+possible character is omitted, the rule is skipped there and tokenization can
+change. Extra characters cause additional matcher calls. Rules without this
+option remain candidates for every character. At each position, the tokenizer
+tries eligible rules in their defined order, and the first matching rule wins.
+The declaration must stay valid for the tokenizer's lifetime; create a new
+tokenizer after changing a rule's matcher or possible starting characters.
+
 ```lisp
 (let* ((tokenizer
          (make-tokenizer

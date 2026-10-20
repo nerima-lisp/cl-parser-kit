@@ -378,3 +378,103 @@
         (lambda (&rest args) (setf callback-args args))))
      :source-length 2 1)
     (expect callback-args :to-equal '(:source-length 1 2 1 1 2))))
+(it-sequential "first-character-dispatch-priority-and-fallback-test"
+  (flet ((char-rule (type character first-characters)
+           (make-token-rule
+            :type type
+            :first-characters first-characters
+            :matcher
+            (lambda (source index)
+              (when (and (< index (length source))
+                         (char= (char source index) character))
+                (values t 1 (string character) character))))))
+    (let* ((specific-before-fallback
+             (tokenize
+              "a"
+              (make-tokenizer
+               :rules (list (char-rule :specific #\a "a")
+                            (char-rule :fallback #\a nil)))))
+           (fallback-before-specific
+             (tokenize
+              "a"
+              (make-tokenizer
+               :rules (list (char-rule :fallback #\a nil)
+                            (char-rule :specific #\a "a")))))
+           (fallback-on-unlisted-character
+             (tokenize
+              "b"
+              (make-tokenizer
+               :rules (list (char-rule :a #\a "a")
+                            (char-rule :fallback #\b nil)))))
+           (unknown-on-unlisted-character
+             (tokenize
+              "b"
+              (make-tokenizer
+               :rules (list (char-rule :a #\a "a"))))))
+      (expect (map 'list #'token-type specific-before-fallback)
+              :to-equal '(:specific))
+      (expect (map 'list #'token-type fallback-before-specific)
+              :to-equal '(:fallback))
+      (expect (map 'list #'token-type fallback-on-unlisted-character)
+              :to-equal '(:fallback))
+      (expect (map 'list #'token-type unknown-on-unlisted-character)
+              :to-equal '(:unknown))))
+  (expect (lambda () (make-token-rule :first-characters #()))
+          :to-throw 'error)
+  (expect (lambda ()
+            (make-token-rule :first-characters (list #\a 1)))
+          :to-throw 'error))
+(it-sequential "first-character-dispatch-failed-candidate-falls-back-test"
+  (let* ((source "a")
+         (specific
+           (make-token-rule
+            :type :specific
+            :first-characters "a"
+            :matcher (lambda (source index)
+                       (declare (ignore source index))
+                       nil)))
+         (fallback
+           (make-token-rule
+            :type :fallback
+            :matcher (lambda (source index)
+                       (when (char= (char source index) #\a)
+                         (values t 1 "a" #\a)))))
+         (tokens
+           (tokenize source (make-tokenizer :rules (list specific fallback)))))
+    (expect (map 'list #'token-type tokens)
+            :to-equal '(:fallback))))
+(it-sequential "first-character-dispatch-mode-transitions-update-index-test"
+  (flet ((char-rule (type character first-characters &optional action)
+           (make-token-rule
+            :type type
+            :action action
+            :first-characters first-characters
+            :matcher
+            (lambda (source index)
+              (when (and (< index (length source))
+                         (char= (char source index) character))
+                (values t 1 (string character) character)))))
+         (content-rule ()
+           (make-token-rule
+            :type :text
+            :matcher
+            (lambda (source index)
+              (when (< index (length source))
+                (let ((character (char source index)))
+                  (unless (char= character #\<)
+                    (values t 1 (string character) character))))))))
+    (let* ((tokenizer
+             (make-tokenizer
+              :modes
+              (list
+               (cons :content
+                     (list (char-rule :open #\< "<" '(:push :tag))
+                           (content-rule)))
+               (cons :tag
+                     (list (char-rule :name #\x "x" '(:switch :inside))))
+               (cons :inside
+                     (list (char-rule :close #\> ">" :pop))))
+              :initial-mode :content))
+           (tokens (tokenize "<x>a" tokenizer)))
+      (expect (map 'list #'token-type tokens)
+              :to-equal '(:open :name :close :text)))))
