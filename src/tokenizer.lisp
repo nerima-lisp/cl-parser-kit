@@ -284,13 +284,14 @@ internal :DEFAULT mode. Rule actions must refer to a declared mode."
                          :unknown-token-type unknown-token-type)))))
 (defstruct (tokenizer-cursor
              (:constructor %make-tokenizer-cursor
-                 (&key source tokenizer modes mode-stack index line column
+                 (&key source tokenizer modes current-rules mode-stack index line column
                        token-count max-tokens max-mode-depth
                        on-limit-exceeded token-constructor)))
   "Incremental token-production state over one complete source string."
   source
   tokenizer
   modes
+  current-rules
   mode-stack
   index
   line
@@ -358,8 +359,10 @@ END LINE COLUMN) for each emitted token and must return a non-NIL object."
            (mode-rules
             (loop for (mode . rules) in mode-entries
                   collect (cons mode
-                                (%ensure-tokenizer-rule-vector rules max-rules)))))
-      (unless (assoc initial-mode mode-rules :test #'eq)
+                                (%ensure-tokenizer-rule-vector rules max-rules))))
+           (initial-mode-entry
+             (assoc initial-mode mode-rules :test #'eq)))
+      (unless initial-mode-entry
         (error "Unknown initial tokenizer mode ~S." initial-mode))
       (when (> 1 max-mode-depth)
         (when on-limit-exceeded
@@ -369,6 +372,7 @@ END LINE COLUMN) for each emitted token and must return a non-NIL object."
       (%make-tokenizer-cursor :source source
                               :tokenizer tokenizer
                               :modes mode-rules
+                              :current-rules (cdr initial-mode-entry)
                               :mode-stack (list initial-mode)
                               :index 0
                               :line 1
@@ -384,29 +388,41 @@ END LINE COLUMN) for each emitted token and must return a non-NIL object."
       (%token-rule-action-components (token-rule-action rule))
     (case operation
       (:push
-       (unless (assoc mode (tokenizer-cursor-modes cursor) :test #'eq)
-         (error "Tokenizer action refers to unknown mode ~S." mode))
-       (let ((depth (1+ (length (tokenizer-cursor-mode-stack cursor)))))
-         (when (> depth (tokenizer-cursor-max-mode-depth cursor))
-           (let ((callback (tokenizer-cursor-on-limit-exceeded cursor)))
-             (when callback
-               (funcall callback :mode-depth
-                        (tokenizer-cursor-max-mode-depth cursor)
-                        depth offset line column)))
-           (error 'tokenizer-resource-limit-exceeded
-                  :kind :mode-depth
-                  :value depth
-                  :limit (tokenizer-cursor-max-mode-depth cursor)))
-         (push mode (tokenizer-cursor-mode-stack cursor))))
+       (let ((mode-entry
+               (assoc mode (tokenizer-cursor-modes cursor) :test #'eq)))
+         (unless mode-entry
+           (error "Tokenizer action refers to unknown mode ~S." mode))
+         (let ((depth (1+ (length (tokenizer-cursor-mode-stack cursor)))))
+           (when (> depth (tokenizer-cursor-max-mode-depth cursor))
+             (let ((callback (tokenizer-cursor-on-limit-exceeded cursor)))
+               (when callback
+                 (funcall callback :mode-depth
+                          (tokenizer-cursor-max-mode-depth cursor)
+                          depth offset line column)))
+             (error 'tokenizer-resource-limit-exceeded
+                    :kind :mode-depth
+                    :value depth
+                    :limit (tokenizer-cursor-max-mode-depth cursor)))
+           (push mode (tokenizer-cursor-mode-stack cursor))
+           (setf (tokenizer-cursor-current-rules cursor)
+                 (cdr mode-entry)))))
       (:pop
        (unless (cdr (tokenizer-cursor-mode-stack cursor))
          (error "Tokenizer mode stack underflow while applying :POP."))
-       (setf (tokenizer-cursor-mode-stack cursor)
-             (cdr (tokenizer-cursor-mode-stack cursor))))
+       (let ((mode-stack (cdr (tokenizer-cursor-mode-stack cursor))))
+         (setf (tokenizer-cursor-mode-stack cursor) mode-stack
+               (tokenizer-cursor-current-rules cursor)
+               (cdr (assoc (car mode-stack)
+                           (tokenizer-cursor-modes cursor)
+                           :test #'eq)))))
       (:switch
-       (unless (assoc mode (tokenizer-cursor-modes cursor) :test #'eq)
-         (error "Tokenizer action refers to unknown mode ~S." mode))
-       (setf (car (tokenizer-cursor-mode-stack cursor)) mode)))))
+       (let ((mode-entry
+               (assoc mode (tokenizer-cursor-modes cursor) :test #'eq)))
+         (unless mode-entry
+           (error "Tokenizer action refers to unknown mode ~S." mode))
+         (setf (car (tokenizer-cursor-mode-stack cursor)) mode
+               (tokenizer-cursor-current-rules cursor)
+               (cdr mode-entry)))))))
 
 (defun %tokenizer-cursor-count-token (cursor offset line column)
   (let* ((next-count (1+ (tokenizer-cursor-token-count cursor)))
@@ -430,9 +446,7 @@ END LINE COLUMN) for each emitted token and must return a non-NIL object."
    for line = (tokenizer-cursor-line cursor)
    for column = (tokenizer-cursor-column cursor)
    while (< index (length source))
-   do (let* ((mode (car (tokenizer-cursor-mode-stack cursor)))
-             (rules (cdr (assoc mode (tokenizer-cursor-modes cursor)
-                                :test #'eq))))
+   do (let* ((rules (tokenizer-cursor-current-rules cursor)))
         (multiple-value-bind (matched-p rule end end-line end-column token)
             (%tokenize-first-match
              rules source index line column
@@ -442,7 +456,8 @@ END LINE COLUMN) for each emitted token and must return a non-NIL object."
                 (setf (tokenizer-cursor-index cursor) end
                       (tokenizer-cursor-line cursor) end-line
                       (tokenizer-cursor-column cursor) end-column)
-                (%tokenizer-cursor-apply-action cursor rule index line column)
+                (when (token-rule-action rule)
+                  (%tokenizer-cursor-apply-action cursor rule index line column))
                 (when token
                   (%tokenizer-cursor-count-token cursor index line column)
                   (return token)))
